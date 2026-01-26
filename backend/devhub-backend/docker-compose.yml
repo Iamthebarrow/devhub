@@ -1,0 +1,111 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      # Mount Docker socket for local dev (direct access)
+      # For production, use socket-proxy instead (see with-socket-proxy profile)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # Celery worker for background tasks (Phase 5)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      # Worker needs Docker socket for image operations
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: >
+      celery -A config worker -l INFO --concurrency=2
+
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=devhub
+      - POSTGRES_USER=devhub
+      - POSTGRES_PASSWORD=devhub_local_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devhub -d devhub"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis service (required for Phase 5 - Celery broker)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Docker socket proxy (optional, recommended for production)
+  # Use with: docker compose --profile with-socket-proxy up
+  # Then set DOCKER_HOST=tcp://docker-socket-proxy:2375 in .env
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    environment:
+      # Phase 5: Enable read + POST for image operations
+      - CONTAINERS=1    # Allow container operations
+      - IMAGES=1        # Allow image listing and operations
+      - INFO=1          # Allow docker info
+      - VERSION=1       # Allow docker version
+      - NETWORKS=1      # Allow network listing
+      - VOLUMES=1       # Allow volume listing
+      - POST=1          # Allow POST requests (for image pull/remove)
+      - BUILD=0         # Deny build operations
+      - COMMIT=0        # Deny commit operations
+      - CONFIGS=0       # Deny config operations
+      - DISTRIBUTION=0  # Deny distribution operations
+      - EXEC=0          # Deny exec operations
+      - GRPC=0          # Deny gRPC
+      - NODES=0         # Deny swarm nodes
+      - PLUGINS=0       # Deny plugins
+      - SECRETS=0       # Deny secrets
+      - SERVICES=0      # Deny swarm services
+      - SESSION=0       # Deny session
+      - SWARM=0         # Deny swarm operations
+      - SYSTEM=0        # Deny system operations (except info via INFO=1)
+      - TASKS=0         # Deny tasks
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    profiles:
+      - with-socket-proxy
+
+volumes:
+  postgres_data:
+  redis_data:

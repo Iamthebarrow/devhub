@@ -1,0 +1,65 @@
+[project]
+name = "devhub-backend"
+version = "0.1.0"
+description = "DevHub - Server management suite backend"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.0,<6.0",
+    "djangorestframework>=3.14,<4.0",
+    "djangorestframework-simplejwt>=5.3,<6.0",
+    "django-environ>=0.11,<1.0",
+    "django-cors-headers>=4.3,<5.0",
+    "drf-spectacular>=0.27,<1.0",
+    "psycopg[binary]>=3.1,<4.0",
+    "gunicorn>=21.0,<23.0",
+    "docker>=7.0,<8.0",
+    # Celery + Redis (Phase 5)
+    "celery>=5.3,<6.0",
+    "redis>=5.0,<6.0",
+    # Security + Observability (Phase 6)
+    "argon2-cffi>=23.1,<24.0",
+    "django-axes>=6.4,<7.0",
+    "python-json-logger>=2.0,<3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+    "pytest-django>=4.7,<5.0",
+    "ruff>=0.4,<1.0",
+    "pre-commit>=3.6,<4.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["apps", "config", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "DJ",     # flake8-django
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.local"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short"
+testpaths = ["tests"]
