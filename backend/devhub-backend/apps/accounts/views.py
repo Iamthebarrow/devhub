@@ -87,7 +87,7 @@ class LoginView(APIView):
     throttle_classes = [LoginThrottle]
 
     def post(self, request: Request) -> Response:
-        serializer = LoginSerializer(data=request.data)
+        serializer = LoginSerializer(data=request.data, context={"request": request})
 
         if not serializer.is_valid():
             # Return consistent error format without leaking info

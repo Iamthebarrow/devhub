@@ -17,7 +17,9 @@ class LoginSerializer(serializers.Serializer):
         username = attrs.get("username")
         password = attrs.get("password")
 
-        user = authenticate(username=username, password=password)
+        # Pass request for django-axes login tracking
+        request = self.context.get("request")
+        user = authenticate(request=request, username=username, password=password)
 
         if not user:
             raise serializers.ValidationError(
