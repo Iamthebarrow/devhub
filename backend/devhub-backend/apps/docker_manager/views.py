@@ -5,7 +5,7 @@ All endpoints require authentication with at least viewer role.
 Lifecycle operations (start/stop/restart) require operator role or higher.
 """
 
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -657,14 +657,14 @@ class ImageListView(APIView):
             403: DockerErrorSerializer,
         },
         examples=[
-            {
-                "name": "Pull nginx:latest",
-                "value": {"image": "nginx:latest"},
-            },
-            {
-                "name": "Pull specific version",
-                "value": {"image": "python:3.12-slim"},
-            },
+            OpenApiExample(
+                name="Pull nginx:latest",
+                value={"image": "nginx:latest"},
+            ),
+            OpenApiExample(
+                name="Pull specific version",
+                value={"image": "python:3.12-slim"},
+            ),
         ],
     ),
 )
@@ -729,14 +729,14 @@ class ImagePullView(APIView):
             403: DockerErrorSerializer,
         },
         examples=[
-            {
-                "name": "Remove image",
-                "value": {"force": False},
-            },
-            {
-                "name": "Force remove",
-                "value": {"force": True},
-            },
+            OpenApiExample(
+                name="Remove image",
+                value={"force": False},
+            ),
+            OpenApiExample(
+                name="Force remove",
+                value={"force": True},
+            ),
         ],
     ),
 )
