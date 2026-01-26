@@ -66,7 +66,7 @@ def _error_response(code: str, message: str, details: dict | None = None) -> dic
             200: LoginResponseSerializer,
             401: AuthErrorSerializer,
         },
-        tags=["Auth"],
+        tags=["auth"],
     )
 )
 class LoginView(APIView):
@@ -125,7 +125,7 @@ class LoginView(APIView):
             200: RefreshResponseSerializer,
             401: AuthErrorSerializer,
         },
-        tags=["Auth"],
+        tags=["auth"],
     )
 )
 class RefreshView(APIView):
@@ -200,7 +200,7 @@ class RefreshView(APIView):
         responses={
             200: LogoutResponseSerializer,
         },
-        tags=["Auth"],
+        tags=["auth"],
     )
 )
 class LogoutView(APIView):
@@ -243,7 +243,7 @@ class LogoutView(APIView):
             200: UserSerializer,
             401: AuthErrorSerializer,
         },
-        tags=["Auth"],
+        tags=["auth"],
     )
 )
 class MeView(APIView):

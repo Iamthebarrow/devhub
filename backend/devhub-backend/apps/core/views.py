@@ -14,7 +14,7 @@ from drf_spectacular.utils import extend_schema
     summary="Health check",
     description="Returns the health status of the API.",
     responses={200: {"type": "object", "properties": {"status": {"type": "string"}}}},
-    tags=["System"],
+    tags=["system"],
 )
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -39,7 +39,7 @@ def health(request: Request) -> Response:
             },
         }
     },
-    tags=["System"],
+    tags=["system"],
 )
 @api_view(["GET"])
 @permission_classes([AllowAny])
