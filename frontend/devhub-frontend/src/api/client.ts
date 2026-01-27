@@ -47,6 +47,7 @@ interface RequestOptions {
   headers?: Record<string, string>
   body?: string
   credentials?: RequestCredentials
+  signal?: AbortSignal // Phase 6: Support request cancellation
 }
 
 function logRequestId(response: Response): void {
@@ -144,6 +145,7 @@ async function request<T>(
   const response = await fetch(url, {
     ...options,
     headers,
+    signal: options.signal, // Phase 6: Pass abort signal for cancellation
   })
 
   logRequestId(response)
@@ -184,9 +186,10 @@ export const apiClient = {
 
   /**
    * GET request
+   * Phase 6: Supports abort signal for request cancellation
    */
-  get: async <T>(endpoint: string): Promise<T> => {
-    return request<T>(endpoint, { method: 'GET' })
+  get: async <T>(endpoint: string, signal?: AbortSignal): Promise<T> => {
+    return request<T>(endpoint, { method: 'GET', signal })
   },
 
   /**

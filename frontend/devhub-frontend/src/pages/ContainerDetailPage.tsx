@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import {
@@ -82,6 +82,7 @@ function getStatusColor(state: string): string {
 
 /**
  * Confirm dialog for restart action.
+ * Phase 6: Improved accessibility with ARIA attributes and keyboard navigation.
  */
 function ConfirmDialog({
   isOpen,
@@ -98,18 +99,61 @@ function ConfirmDialog({
   message: string
   isLoading: boolean
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const cancelButtonRef = useRef<HTMLButtonElement>(null)
+
+  // Focus trap and keyboard handling
+  useEffect(() => {
+    if (!isOpen) return
+
+    // Focus the cancel button when dialog opens
+    cancelButtonRef.current?.focus()
+
+    // Handle escape key
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isLoading) {
+        onCancel()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, isLoading, onCancel])
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        <p className="mt-2 text-sm text-gray-600">{message}</p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dialog-title"
+      aria-describedby="dialog-description"
+      onClick={(e) => {
+        // Close on backdrop click (only if clicking the backdrop itself)
+        if (e.target === e.currentTarget && !isLoading) {
+          onCancel()
+        }
+      }}
+    >
+      <div
+        ref={dialogRef}
+        className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="dialog-title" className="text-lg font-semibold text-gray-900">
+          {title}
+        </h3>
+        <p id="dialog-description" className="mt-2 text-sm text-gray-600">
+          {message}
+        </p>
         <div className="mt-4 flex justify-end gap-3">
           <button
+            ref={cancelButtonRef}
             onClick={onCancel}
             disabled={isLoading}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            type="button"
           >
             Cancel
           </button>
@@ -117,8 +161,9 @@ function ConfirmDialog({
             onClick={onConfirm}
             disabled={isLoading}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            type="button"
           >
-            {isLoading && <RefreshCw className="h-4 w-4 animate-spin" />}
+            {isLoading && <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />}
             Confirm
           </button>
         </div>

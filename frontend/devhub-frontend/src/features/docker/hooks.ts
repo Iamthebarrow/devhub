@@ -4,6 +4,16 @@
  * Phase 3: Read-only hooks for system info and containers list.
  * Phase 4: Container detail, logs, and action mutations.
  * Phase 5: Images, volumes, networks.
+ * Phase 6: StaleTime tuning and abort controller support.
+ *
+ * DEFAULT: StaleTime values:
+ * - System info: 15s (updates regularly)
+ * - System version: 5 minutes (rarely changes)
+ * - Containers list: 5s (changes frequently)
+ * - Container detail: 5s
+ * - Logs: 3s (when polling) - polling only when auto-refresh enabled
+ * - Images: 30s
+ * - Volumes/Networks: 60s (rarely change)
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -57,12 +67,14 @@ export const dockerKeys = {
 /**
  * Hook to fetch Docker system info.
  * Used in DashboardPage for system stats.
+ *
+ * DEFAULT: staleTime 15s - system stats (containers running, images) can change
  */
 export function useSystemInfo() {
   return useQuery({
     queryKey: dockerKeys.systemInfo(),
     queryFn: getSystemInfo,
-    staleTime: 60_000, // 1 minute - system info doesn't change often
+    staleTime: 15_000, // DEFAULT: 15 seconds - system info updates regularly
   })
 }
 
@@ -85,12 +97,14 @@ export function useSystemVersion() {
 /**
  * Hook to fetch containers list with optional filters.
  * Used in ContainersPage for the table.
+ *
+ * DEFAULT: staleTime 5s - containers can start/stop frequently
  */
 export function useContainers(params?: ListContainersParams) {
   return useQuery({
     queryKey: dockerKeys.containersList(params),
     queryFn: () => listContainers(params),
-    staleTime: 10_000, // 10 seconds - container list can change frequently
+    staleTime: 5_000, // DEFAULT: 5 seconds - containers change frequently
   })
 }
 
@@ -101,12 +115,14 @@ export function useContainers(params?: ListContainersParams) {
 /**
  * Hook to fetch container detail by ID.
  * Used in ContainerDetailPage.
+ *
+ * DEFAULT: staleTime 5s - container state can change
  */
 export function useContainer(id: string) {
   return useQuery({
     queryKey: dockerKeys.containerDetail(id),
     queryFn: () => getContainer(id),
-    staleTime: 10_000, // 10 seconds
+    staleTime: 5_000, // DEFAULT: 5 seconds
     enabled: Boolean(id),
   })
 }
@@ -115,7 +131,9 @@ export function useContainer(id: string) {
  * Hook to fetch container logs.
  * Supports polling via refetchInterval when autoRefresh is enabled.
  *
- * DEFAULT: tail=200, poll interval=3s when enabled
+ * Phase 6: Uses abort signal for request cancellation on unmount.
+ *
+ * DEFAULT: tail=200, poll interval=3s when enabled, staleTime 3s
  */
 export function useContainerLogs(
   id: string,
@@ -124,10 +142,12 @@ export function useContainerLogs(
 ) {
   return useQuery({
     queryKey: dockerKeys.containerLogs(id, params),
-    queryFn: () => getContainerLogs(id, params),
-    staleTime: 5_000, // 5 seconds
+    // Pass signal for abort-on-unmount (Phase 6)
+    queryFn: ({ signal }) => getContainerLogs(id, params, signal),
+    staleTime: 3_000, // DEFAULT: 3 seconds for logs
     enabled: Boolean(id),
     // Poll every 3 seconds when auto-refresh is enabled
+    // DEFAULT: Only poll when explicitly enabled to avoid over-polling
     refetchInterval: options?.autoRefresh ? 3_000 : false,
   })
 }

@@ -17,3 +17,39 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* =============================================================================
+ * Accessibility: Focus Styles (Phase 6)
+ * ============================================================================= */
+
+/* Ensure focus-visible styles are visible for keyboard navigation */
+*:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Remove default outline for mouse users (focus without focus-visible) */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Ensure interactive elements have visible focus states */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Skip link for keyboard users */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg;
+}
+
+/* Ensure disabled elements are clearly identifiable */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  @apply cursor-not-allowed opacity-50;
+}

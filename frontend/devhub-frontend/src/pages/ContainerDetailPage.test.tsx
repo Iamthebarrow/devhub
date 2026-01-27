@@ -282,4 +282,54 @@ describe('ContainerDetailPage', () => {
       expect(backLink).toHaveAttribute('href', '/containers')
     })
   })
+
+  describe('logs panel polling behavior', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'testuser', roles: ['admin'] },
+      })
+    })
+
+    it('has auto-refresh toggle that is off by default', async () => {
+      renderWithProviders(runningContainer.id)
+
+      await waitFor(() => {
+        expect(screen.getAllByText('nginx-proxy').length).toBeGreaterThan(0)
+      })
+
+      // Auto-refresh checkbox should be unchecked by default
+      const autoRefreshCheckbox = screen.getByRole('checkbox')
+      expect(autoRefreshCheckbox).not.toBeChecked()
+    })
+
+    it('can toggle auto-refresh on', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(runningContainer.id)
+
+      await waitFor(() => {
+        expect(screen.getAllByText('nginx-proxy').length).toBeGreaterThan(0)
+      })
+
+      const autoRefreshCheckbox = screen.getByRole('checkbox')
+      await user.click(autoRefreshCheckbox)
+
+      expect(autoRefreshCheckbox).toBeChecked()
+    })
+
+    it('can change tail count', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(runningContainer.id)
+
+      await waitFor(() => {
+        expect(screen.getAllByText('nginx-proxy').length).toBeGreaterThan(0)
+      })
+
+      const tailSelect = screen.getByLabelText(/tail/i)
+      await user.selectOptions(tailSelect, '500')
+
+      expect(tailSelect).toHaveValue('500')
+    })
+  })
 })

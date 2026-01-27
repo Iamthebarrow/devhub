@@ -105,5 +105,50 @@ describe('API Client', () => {
       expect(response2.data).toBe('protected data')
       expect(requestTracker.refreshCalled).toBe(0)
     })
+
+    it('401 → refresh once → retry once → success flow', async () => {
+      // Comprehensive test of the full 401 recovery flow
+      useAuthStore.getState().setAuthenticated('invalid-token', {
+        id: 1,
+        username: 'testuser',
+        email: 'test@example.com',
+        roles: ['viewer'],
+      })
+
+      // Initial state
+      expect(useAuthStore.getState().accessToken).toBe('invalid-token')
+
+      // Make request that will trigger 401 → refresh → retry
+      const response = await apiClient.get<{ data: string }>('/test/protected')
+
+      // Verify flow completed successfully
+      expect(response.data).toBe('protected data')
+      expect(requestTracker.refreshCalled).toBe(1)
+      expect(useAuthStore.getState().accessToken).toBe('new-access-token')
+      expect(useAuthStore.getState().status).toBe('authenticated')
+    })
+
+    it('401 → refresh fails → logout/redirect flow', async () => {
+      useAuthStore.getState().setAuthenticated('invalid-token', {
+        id: 1,
+        username: 'testuser',
+        email: 'test@example.com',
+        roles: ['admin'],
+      })
+
+      // Initial state is authenticated
+      expect(useAuthStore.getState().status).toBe('authenticated')
+
+      // Make refresh fail
+      setRefreshBehavior(false)
+
+      // Make request
+      await expect(apiClient.get('/test/protected')).rejects.toThrow(AuthError)
+
+      // Verify logout occurred
+      expect(useAuthStore.getState().status).toBe('unauthenticated')
+      expect(useAuthStore.getState().accessToken).toBeNull()
+      expect(useAuthStore.getState().user).toBeNull()
+    })
   })
 })

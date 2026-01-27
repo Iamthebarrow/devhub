@@ -4,6 +4,7 @@
  * Phase 3: System info and containers list (read-only).
  * Phase 4: Container detail, logs, and lifecycle actions.
  * Phase 5: Images, volumes, networks.
+ * Phase 6: Abort signal support for logs fetch cancellation.
  */
 
 import { apiClient } from './client'
@@ -149,12 +150,15 @@ export async function getContainer(id: string): Promise<DockerContainerDetail> {
  * Get container logs.
  * GET /docker/containers/{id}/logs/?tail=&since=
  *
+ * Phase 6: Supports abort signal for request cancellation on unmount.
+ *
  * DEFAULT DECISION: Expects { logs: string } from backend.
  * Falls back to plain string if backend returns text directly.
  */
 export async function getContainerLogs(
   id: string,
-  params?: ContainerLogsParams
+  params?: ContainerLogsParams,
+  signal?: AbortSignal
 ): Promise<ContainerLogsResponse> {
   const searchParams = new URLSearchParams()
   if (params?.tail) {
@@ -167,7 +171,7 @@ export async function getContainerLogs(
   const queryString = searchParams.toString()
   const endpoint = `/docker/containers/${id}/logs/${queryString ? `?${queryString}` : ''}`
 
-  const data = await apiClient.get<unknown>(endpoint)
+  const data = await apiClient.get<unknown>(endpoint, signal)
 
   // Handle both { logs: string } and plain string responses
   if (typeof data === 'string') {
