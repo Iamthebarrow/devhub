@@ -1,2 +1,53 @@
-# devhub
-Development Suite for Home Server
+# DevHub
+
+DevHub is a local-first Docker management stack with a Django + DRF backend and a React + Vite frontend.
+
+## Quick Start (Docker)
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+## Services
+
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8000/api/v1/
+- **Swagger Docs**: http://localhost:8000/api/docs/
+- **OpenAPI Schema**: http://localhost:8000/api/schema/
+- **Health**: http://localhost:8000/api/v1/health/
+- **Version**: http://localhost:8000/api/v1/version/
+
+## Stop and Clean Up
+
+```bash
+docker compose down
+docker compose down -v
+```
+
+## Environment Variables (Root .env)
+
+See `.env.example` for defaults. The key variables are:
+
+- Backend config: `DJANGO_SECRET_KEY`, `DATABASE_URL`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`
+- Docker access: `DOCKER_HOST` (defaults to socket proxy)
+- Celery: `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`
+- Frontend: `VITE_API_BASE_URL`
+
+## Troubleshooting
+
+### CORS or Cookie Issues
+
+- Ensure `CORS_ALLOWED_ORIGINS` includes `http://localhost:5173`
+- Ensure `CSRF_TRUSTED_ORIGINS` includes `http://localhost:5173`
+- If using refresh cookies, the frontend must send `credentials: "include"`
+
+### Backend not reaching Docker
+
+- The stack uses `docker-socket-proxy` by default.
+- Confirm `DOCKER_HOST=tcp://docker-socket-proxy:2375` in `.env`.
+
+## Defaults (Documented Decisions)
+
+- **Frontend runtime**: Vite dev server in a container (for fast local iteration).
+- **Docker access**: docker-socket-proxy enabled by default for safer Docker API access.
