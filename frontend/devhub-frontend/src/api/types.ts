@@ -178,6 +178,149 @@ export interface Container {
   created: string
 }
 
+// =============================================================================
+// Image Types (Phase 5)
+// =============================================================================
+
+/**
+ * Docker image summary from /docker/images/
+ */
+export interface DockerImageSummary {
+  id: string
+  repo_tags: string[]
+  repo_digests: string[]
+  parent_id: string
+  size: number
+  virtual_size: number
+  shared_size: number
+  labels: Record<string, string> | null
+  containers: number
+  created: number // Unix timestamp
+}
+
+/**
+ * Pull image request
+ */
+export interface PullImageRequest {
+  image: string
+}
+
+/**
+ * Queued task response for async operations (pull/remove)
+ * DEFAULT DECISION: Backend returns { status: "queued", task_id?: string }
+ */
+export interface QueuedTaskResponse {
+  status: 'queued' | 'completed' | 'failed'
+  task_id?: string
+  message?: string
+}
+
+// =============================================================================
+// Volume Types (Phase 5)
+// =============================================================================
+
+/**
+ * Docker volume from /docker/volumes/
+ */
+export interface DockerVolume {
+  name: string
+  driver: string
+  mountpoint: string
+  created_at: string
+  status?: Record<string, string>
+  labels: Record<string, string> | null
+  scope: string
+  options: Record<string, string> | null
+  usage_data?: {
+    size: number
+    ref_count: number
+  }
+}
+
+/**
+ * Volumes list response
+ */
+export interface VolumesListResponse {
+  volumes: DockerVolume[]
+  warnings?: string[]
+}
+
+// =============================================================================
+// Network Types (Phase 5)
+// =============================================================================
+
+/**
+ * Docker network from /docker/networks/
+ */
+export interface DockerNetwork {
+  id: string
+  name: string
+  driver: string
+  scope: string
+  created: string
+  internal: boolean
+  attachable: boolean
+  ingress: boolean
+  ipam: {
+    driver: string
+    config: Array<{
+      subnet?: string
+      gateway?: string
+      ip_range?: string
+    }>
+  }
+  enable_ipv6: boolean
+  containers: Record<
+    string,
+    {
+      name: string
+      endpoint_id: string
+      mac_address: string
+      ipv4_address: string
+      ipv6_address: string
+    }
+  >
+  options: Record<string, string>
+  labels: Record<string, string>
+}
+
+// =============================================================================
+// Audit Types (Phase 5)
+// =============================================================================
+
+/**
+ * Audit event from /api/v1/audit/events/
+ */
+export interface AuditEvent {
+  id: number
+  timestamp: string
+  actor: string
+  action: string
+  resource: string
+  status: 'success' | 'failed'
+  details?: Record<string, unknown>
+}
+
+/**
+ * Audit events list params
+ */
+export interface AuditEventsParams {
+  action?: string
+  status?: string
+  actor?: string
+  from?: string
+  to?: string
+}
+
+/**
+ * Audit events list response
+ */
+export interface AuditEventsResponse {
+  results: AuditEvent[]
+  count: number
+}
+
+// Legacy types for compatibility (Phase 1)
 export interface Image {
   id: string
   name: string
@@ -198,20 +341,6 @@ export interface Network {
   name: string
   driver: string
   scope: string
-}
-
-// =============================================================================
-// Audit Types (Phase 4+)
-// =============================================================================
-
-export interface AuditEvent {
-  id: number
-  timestamp: string
-  user: string
-  action: string
-  resource: string
-  status: 'success' | 'failed'
-  details?: Record<string, unknown>
 }
 
 // =============================================================================

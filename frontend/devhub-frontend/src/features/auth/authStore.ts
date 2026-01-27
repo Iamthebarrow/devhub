@@ -84,3 +84,56 @@ export const selectCanOperateContainers = (state: AuthStore): boolean => {
 export function useCanOperateContainers(): boolean {
   return useAuthStore(selectCanOperateContainers)
 }
+
+// =============================================================================
+// Role-based Access Helpers (Phase 5)
+// =============================================================================
+
+/**
+ * Check if user has permission to pull images.
+ * Returns true if user has 'operator' or 'admin' role.
+ */
+export const selectCanPullImages = (state: AuthStore): boolean => {
+  const roles = state.user?.roles ?? []
+  return roles.some((role) => OPERATOR_ROLES.includes(role.toLowerCase()))
+}
+
+/**
+ * Hook to check if current user can pull images.
+ */
+export function useCanPullImages(): boolean {
+  return useAuthStore(selectCanPullImages)
+}
+
+/**
+ * Check if user is admin.
+ * Returns true if user has 'admin' role.
+ * Used for admin-only features like removing images.
+ */
+export const selectIsAdmin = (state: AuthStore): boolean => {
+  const roles = state.user?.roles ?? []
+  return roles.some((role) => role.toLowerCase() === 'admin')
+}
+
+/**
+ * Hook to check if current user is admin.
+ */
+export function useIsAdmin(): boolean {
+  return useAuthStore(selectIsAdmin)
+}
+
+/**
+ * Check if user can view audit logs.
+ * Returns true if user has 'operator' or 'admin' role.
+ */
+export const selectCanViewAudit = (state: AuthStore): boolean => {
+  const roles = state.user?.roles ?? []
+  return roles.some((role) => OPERATOR_ROLES.includes(role.toLowerCase()))
+}
+
+/**
+ * Hook to check if current user can view audit logs.
+ */
+export function useCanViewAudit(): boolean {
+  return useAuthStore(selectCanViewAudit)
+}

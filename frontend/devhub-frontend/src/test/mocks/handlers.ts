@@ -491,4 +491,320 @@ export const handlers = [
 
     return HttpResponse.json({ message: 'Container restarted successfully' })
   }),
+
+  // ==========================================================================
+  // Docker Images API (Phase 5)
+  // ==========================================================================
+
+  // Images list
+  http.get(`${API_BASE_URL}/docker/images/`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      )
+    }
+
+    return HttpResponse.json({
+      results: mockImages,
+      count: mockImages.length,
+    })
+  }),
+
+  // Pull image
+  http.post(`${API_BASE_URL}/docker/images/pull/`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      )
+    }
+
+    return HttpResponse.json({
+      status: 'queued',
+      task_id: 'pull-task-123',
+      message: 'Image pull queued',
+    })
+  }),
+
+  // Remove image
+  http.post(`${API_BASE_URL}/docker/images/:id/remove/`, ({ request, params }) => {
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      )
+    }
+
+    const { id } = params
+    const imageIndex = mockImages.findIndex((img) => img.id === id)
+
+    if (imageIndex === -1) {
+      return HttpResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'Image not found' } },
+        { status: 404 }
+      )
+    }
+
+    return HttpResponse.json({
+      status: 'queued',
+      task_id: 'remove-task-123',
+      message: 'Image removal queued',
+    })
+  }),
+
+  // ==========================================================================
+  // Docker Volumes API (Phase 5)
+  // ==========================================================================
+
+  // Volumes list
+  http.get(`${API_BASE_URL}/docker/volumes/`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      )
+    }
+
+    return HttpResponse.json({
+      volumes: mockVolumes,
+      warnings: [],
+    })
+  }),
+
+  // ==========================================================================
+  // Docker Networks API (Phase 5)
+  // ==========================================================================
+
+  // Networks list
+  http.get(`${API_BASE_URL}/docker/networks/`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      )
+    }
+
+    return HttpResponse.json({
+      results: mockNetworks,
+      count: mockNetworks.length,
+    })
+  }),
+
+  // ==========================================================================
+  // Audit API (Phase 5)
+  // ==========================================================================
+
+  // Audit events list
+  http.get(`${API_BASE_URL}/audit/events/`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      )
+    }
+
+    return HttpResponse.json({
+      results: mockAuditEvents,
+      count: mockAuditEvents.length,
+    })
+  }),
+]
+
+// ==========================================================================
+// Mock Data for Phase 5
+// ==========================================================================
+
+export const mockImages = [
+  {
+    id: 'sha256:abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
+    repo_tags: ['nginx:latest'],
+    repo_digests: ['nginx@sha256:abc123'],
+    parent_id: '',
+    size: 142000000, // ~142MB
+    virtual_size: 142000000,
+    shared_size: 0,
+    labels: { maintainer: 'NGINX Docker Maintainers' },
+    containers: 1,
+    created: Math.floor(Date.now() / 1000) - 86400 * 14, // 2 weeks ago
+  },
+  {
+    id: 'sha256:def456ghi789def456ghi789def456ghi789def456ghi789def456ghi789def4',
+    repo_tags: ['postgres:15'],
+    repo_digests: ['postgres@sha256:def456'],
+    parent_id: '',
+    size: 379000000, // ~379MB
+    virtual_size: 379000000,
+    shared_size: 0,
+    labels: null,
+    containers: 1,
+    created: Math.floor(Date.now() / 1000) - 86400 * 30, // 1 month ago
+  },
+  {
+    id: 'sha256:ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi7',
+    repo_tags: ['redis:alpine'],
+    repo_digests: ['redis@sha256:ghi789'],
+    parent_id: '',
+    size: 32000000, // ~32MB
+    virtual_size: 32000000,
+    shared_size: 0,
+    labels: null,
+    containers: 1,
+    created: Math.floor(Date.now() / 1000) - 86400 * 21, // 3 weeks ago
+  },
+]
+
+export const mockVolumes = [
+  {
+    name: 'postgres-data',
+    driver: 'local',
+    mountpoint: '/var/lib/docker/volumes/postgres-data/_data',
+    created_at: '2024-01-10T10:00:00Z',
+    status: {},
+    labels: { 'com.example.service': 'database' },
+    scope: 'local',
+    options: null,
+    usage_data: {
+      size: 524288000, // ~500MB
+      ref_count: 1,
+    },
+  },
+  {
+    name: 'redis-data',
+    driver: 'local',
+    mountpoint: '/var/lib/docker/volumes/redis-data/_data',
+    created_at: '2024-01-12T14:30:00Z',
+    status: {},
+    labels: null,
+    scope: 'local',
+    options: null,
+    usage_data: {
+      size: 10485760, // ~10MB
+      ref_count: 0,
+    },
+  },
+  {
+    name: 'app-uploads',
+    driver: 'local',
+    mountpoint: '/var/lib/docker/volumes/app-uploads/_data',
+    created_at: '2024-01-15T09:15:00Z',
+    status: {},
+    labels: null,
+    scope: 'local',
+    options: null,
+  },
+]
+
+export const mockNetworks = [
+  {
+    id: 'abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
+    name: 'bridge',
+    driver: 'bridge',
+    scope: 'local',
+    created: '2024-01-01T00:00:00Z',
+    internal: false,
+    attachable: false,
+    ingress: false,
+    ipam: {
+      driver: 'default',
+      config: [{ subnet: '172.17.0.0/16', gateway: '172.17.0.1' }],
+    },
+    enable_ipv6: false,
+    containers: {
+      'abc123': {
+        name: 'nginx-proxy',
+        endpoint_id: 'ep123',
+        mac_address: '02:42:ac:11:00:02',
+        ipv4_address: '172.17.0.2/16',
+        ipv6_address: '',
+      },
+    },
+    options: { 'com.docker.network.bridge.default_bridge': 'true' },
+    labels: {},
+  },
+  {
+    id: 'def456ghi789def456ghi789def456ghi789def456ghi789def456ghi789def4',
+    name: 'host',
+    driver: 'host',
+    scope: 'local',
+    created: '2024-01-01T00:00:00Z',
+    internal: false,
+    attachable: false,
+    ingress: false,
+    ipam: {
+      driver: 'default',
+      config: [],
+    },
+    enable_ipv6: false,
+    containers: {},
+    options: {},
+    labels: {},
+  },
+  {
+    id: 'ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi7',
+    name: 'devhub_network',
+    driver: 'bridge',
+    scope: 'local',
+    created: '2024-01-05T12:00:00Z',
+    internal: false,
+    attachable: true,
+    ingress: false,
+    ipam: {
+      driver: 'default',
+      config: [{ subnet: '172.18.0.0/16', gateway: '172.18.0.1' }],
+    },
+    enable_ipv6: false,
+    containers: {},
+    options: {},
+    labels: { 'com.docker.compose.project': 'devhub' },
+  },
+]
+
+export const mockAuditEvents = [
+  {
+    id: 1,
+    timestamp: '2024-01-20T14:32:15Z',
+    actor: 'admin',
+    action: 'container.start',
+    resource: 'nginx-proxy',
+    status: 'success' as const,
+  },
+  {
+    id: 2,
+    timestamp: '2024-01-20T14:30:00Z',
+    actor: 'operator1',
+    action: 'container.stop',
+    resource: 'redis-cache',
+    status: 'success' as const,
+  },
+  {
+    id: 3,
+    timestamp: '2024-01-20T14:25:30Z',
+    actor: 'admin',
+    action: 'image.pull',
+    resource: 'nginx:latest',
+    status: 'success' as const,
+  },
+  {
+    id: 4,
+    timestamp: '2024-01-20T14:20:00Z',
+    actor: 'viewer1',
+    action: 'container.view',
+    resource: 'postgres-db',
+    status: 'success' as const,
+  },
+  {
+    id: 5,
+    timestamp: '2024-01-20T14:15:00Z',
+    actor: 'operator1',
+    action: 'container.restart',
+    resource: 'node-api',
+    status: 'failed' as const,
+  },
 ]

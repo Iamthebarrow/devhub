@@ -9,23 +9,42 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import clsx from 'clsx'
+import { useCanViewAudit } from '../../features/auth'
 
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
 }
 
-const navItems = [
+interface NavItem {
+  to: string
+  icon: LucideIcon
+  label: string
+  requiresAuditAccess?: boolean
+}
+
+const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/containers', icon: Box, label: 'Containers' },
   { to: '/images', icon: HardDrive, label: 'Images' },
   { to: '/volumes', icon: Database, label: 'Volumes' },
   { to: '/networks', icon: Network, label: 'Networks' },
-  { to: '/audit', icon: FileText, label: 'Audit Log' },
+  { to: '/audit', icon: FileText, label: 'Audit Log', requiresAuditAccess: true },
 ]
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const canViewAudit = useCanViewAudit()
+
+  // Filter nav items based on permissions
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.requiresAuditAccess && !canViewAudit) {
+      return false
+    }
+    return true
+  })
+
   return (
     <aside
       className={clsx(
@@ -47,7 +66,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="mt-4 flex flex-col gap-1 px-2">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {visibleNavItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}

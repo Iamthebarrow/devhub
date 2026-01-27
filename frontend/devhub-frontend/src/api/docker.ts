@@ -3,6 +3,7 @@
  *
  * Phase 3: System info and containers list (read-only).
  * Phase 4: Container detail, logs, and lifecycle actions.
+ * Phase 5: Images, volumes, networks.
  */
 
 import { apiClient } from './client'
@@ -13,6 +14,10 @@ import {
   DockerContainerDetailSchema,
   ContainerLogsResponseSchema,
   ContainerActionResponseSchema,
+  ImagesListSchema,
+  QueuedTaskResponseSchema,
+  VolumesListResponseSchema,
+  NetworksListSchema,
 } from './zod'
 import type {
   DockerSystemInfo,
@@ -23,6 +28,10 @@ import type {
   ContainerLogsParams,
   ContainerActionResponse,
   PagedResult,
+  DockerImageSummary,
+  QueuedTaskResponse,
+  VolumesListResponse,
+  DockerNetwork,
 } from './types'
 
 // =============================================================================
@@ -222,4 +231,103 @@ export async function restartContainer(id: string): Promise<ContainerActionRespo
   }
 
   return result.data as ContainerActionResponse
+}
+
+// =============================================================================
+// Images Endpoints (Phase 5)
+// =============================================================================
+
+/**
+ * List Docker images.
+ * GET /docker/images/
+ */
+export async function listImages(): Promise<PagedResult<DockerImageSummary>> {
+  const data = await apiClient.get<unknown>('/docker/images/')
+
+  const result = ImagesListSchema.safeParse(data)
+  if (!result.success) {
+    console.error('[Docker API] Invalid images list response:', result.error)
+    throw new DockerApiError('Invalid images list response from server', 500, 'INVALID_RESPONSE')
+  }
+
+  return result.data as PagedResult<DockerImageSummary>
+}
+
+/**
+ * Pull a Docker image.
+ * POST /docker/images/pull/
+ *
+ * DEFAULT DECISION: Backend returns { status: "queued", task_id?: string }
+ * The pull operation runs asynchronously.
+ */
+export async function pullImage(image: string): Promise<QueuedTaskResponse> {
+  const data = await apiClient.post<unknown>('/docker/images/pull/', { image })
+
+  const result = QueuedTaskResponseSchema.safeParse(data)
+  if (!result.success) {
+    // Fallback: return generic queued response
+    return { status: 'queued', message: 'Image pull queued' }
+  }
+
+  return result.data as QueuedTaskResponse
+}
+
+/**
+ * Remove a Docker image.
+ * POST /docker/images/{id}/remove/
+ *
+ * Admin-only UI. Backend enforces role check.
+ * DEFAULT DECISION: Backend returns { status: "queued", task_id?: string }
+ */
+export async function removeImage(id: string, force?: boolean): Promise<QueuedTaskResponse> {
+  const body = force ? { force: true } : {}
+  const data = await apiClient.post<unknown>(`/docker/images/${id}/remove/`, body)
+
+  const result = QueuedTaskResponseSchema.safeParse(data)
+  if (!result.success) {
+    // Fallback: return generic queued response
+    return { status: 'queued', message: 'Image removal queued' }
+  }
+
+  return result.data as QueuedTaskResponse
+}
+
+// =============================================================================
+// Volumes Endpoints (Phase 5)
+// =============================================================================
+
+/**
+ * List Docker volumes.
+ * GET /docker/volumes/
+ */
+export async function listVolumes(): Promise<VolumesListResponse> {
+  const data = await apiClient.get<unknown>('/docker/volumes/')
+
+  const result = VolumesListResponseSchema.safeParse(data)
+  if (!result.success) {
+    console.error('[Docker API] Invalid volumes list response:', result.error)
+    throw new DockerApiError('Invalid volumes list response from server', 500, 'INVALID_RESPONSE')
+  }
+
+  return result.data as VolumesListResponse
+}
+
+// =============================================================================
+// Networks Endpoints (Phase 5)
+// =============================================================================
+
+/**
+ * List Docker networks.
+ * GET /docker/networks/
+ */
+export async function listNetworks(): Promise<PagedResult<DockerNetwork>> {
+  const data = await apiClient.get<unknown>('/docker/networks/')
+
+  const result = NetworksListSchema.safeParse(data)
+  if (!result.success) {
+    console.error('[Docker API] Invalid networks list response:', result.error)
+    throw new DockerApiError('Invalid networks list response from server', 500, 'INVALID_RESPONSE')
+  }
+
+  return result.data as PagedResult<DockerNetwork>
 }

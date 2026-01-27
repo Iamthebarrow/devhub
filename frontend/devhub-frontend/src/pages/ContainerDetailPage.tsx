@@ -339,8 +339,8 @@ function LogsPanel({ containerId }: { containerId: string }) {
         {/* Loading skeleton */}
         {isLoading && !data && (
           <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${60 + Math.random() * 40}%` }} />
+            {[85, 70, 90, 65, 80].map((width, i) => (
+              <div key={i} className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${width}%` }} />
             ))}
           </div>
         )}
@@ -466,8 +466,8 @@ export function ContainerDetailPage() {
             <div className="space-y-4">
               <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
               <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${40 + Math.random() * 30}%` }} />
+                {[55, 65, 50, 60].map((width, i) => (
+                  <div key={i} className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${width}%` }} />
                 ))}
               </div>
             </div>

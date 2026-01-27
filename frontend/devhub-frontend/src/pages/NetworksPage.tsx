@@ -1,94 +1,193 @@
+import { useState } from 'react'
 import { PageShell } from '../components/layout/PageShell'
-import { Search, Network } from 'lucide-react'
+import { Search, Network, RefreshCw, AlertCircle } from 'lucide-react'
+import { useNetworks, dockerKeys } from '../features/docker'
+import { useQueryClient } from '@tanstack/react-query'
+import type { DockerNetwork } from '../api/types'
+
+/**
+ * Get primary subnet from IPAM config.
+ */
+function getSubnet(network: DockerNetwork): string {
+  const config = network.ipam?.config?.[0]
+  if (config?.subnet) {
+    return config.subnet
+  }
+  return '—'
+}
+
+/**
+ * Get connected containers count.
+ */
+function getConnectedCount(network: DockerNetwork): number {
+  return Object.keys(network.containers || {}).length
+}
 
 /**
  * Networks list page (read-only).
- * Phase 1: Static placeholder UI.
- * Future phases will fetch from /docker/networks/
+ * Phase 5: Full implementation with API wiring.
  */
 export function NetworksPage() {
-  // Placeholder networks - will be fetched from API
-  const placeholderNetworks = [
-    { id: 'abc123', name: 'bridge', driver: 'bridge', scope: 'local', ipam: '172.17.0.0/16' },
-    { id: 'def456', name: 'host', driver: 'host', scope: 'local', ipam: '—' },
-    { id: 'ghi789', name: 'none', driver: 'null', scope: 'local', ipam: '—' },
-    { id: 'jkl012', name: 'devhub_network', driver: 'bridge', scope: 'local', ipam: '172.18.0.0/16' },
-  ]
+  const [searchQuery, setSearchQuery] = useState('')
+  const queryClient = useQueryClient()
+
+  const { data, isLoading, isError, error, refetch } = useNetworks()
+
+  const networks = data?.results ?? []
+
+  // Filter networks by search query
+  const filteredNetworks = networks.filter((network) => {
+    if (!searchQuery) return true
+    const search = searchQuery.toLowerCase()
+    return (
+      network.name.toLowerCase().includes(search) ||
+      network.driver.toLowerCase().includes(search) ||
+      network.id.toLowerCase().includes(search)
+    )
+  })
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: dockerKeys.networks() })
+  }
+
+  const actions = (
+    <button
+      onClick={handleRefresh}
+      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+    >
+      <RefreshCw className="h-4 w-4" />
+      Refresh
+    </button>
+  )
 
   return (
-    <PageShell title="Networks" description="Docker networks (read-only view)">
+    <PageShell title="Networks" description="Docker networks (read-only view)" actions={actions}>
       {/* Search */}
       <div className="mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search networks..."
             className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
       </div>
 
-      {/* Networks table */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Driver
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Scope
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  IPAM Subnet
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Network ID
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {placeholderNetworks.map((network) => (
-                <tr key={network.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Network className="h-4 w-4 text-orange-500" />
-                      <span className="font-medium text-gray-900">{network.name}</span>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span className="rounded bg-gray-100 px-2 py-1 text-sm text-gray-600">
-                      {network.driver}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {network.scope}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-500">
-                    {network.ipam}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-500">
-                    {network.id}
-                  </td>
-                </tr>
+      {/* Loading state */}
+      {isLoading && (
+        <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+          <div className="p-6">
+            <div className="space-y-3">
+              {[85, 70, 90, 75, 80].map((width, i) => (
+                <div key={i} className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${width}%` }} />
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Phase 1 notice */}
-      <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <p className="text-sm text-blue-700">
-          <strong>Phase 1:</strong> Placeholder data. Real networks will be fetched from the Docker
-          API in future phases.
-        </p>
-      </div>
+      {/* Error state */}
+      {isError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
+            <div>
+              <h3 className="font-medium text-red-800">Failed to load networks</h3>
+              <p className="mt-1 text-sm text-red-600">
+                {error instanceof Error ? error.message : 'An unknown error occurred'}
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="mt-3 text-sm font-medium text-red-700 hover:text-red-800"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!isLoading && !isError && filteredNetworks.length === 0 && (
+        <div className="rounded-lg bg-white p-12 text-center shadow-sm">
+          <Network className="mx-auto h-12 w-12 text-gray-300" />
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {searchQuery ? 'No networks match your search' : 'No networks found'}
+          </h3>
+          <p className="mt-2 text-sm text-gray-500">
+            {searchQuery
+              ? 'Try adjusting your search query'
+              : 'No Docker networks are available'}
+          </p>
+        </div>
+      )}
+
+      {/* Networks table */}
+      {!isLoading && !isError && filteredNetworks.length > 0 && (
+        <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-gray-200 bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Driver
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Scope
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    IPAM Subnet
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Containers
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Network ID
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredNetworks.map((network) => {
+                  const shortId = network.id.slice(0, 12)
+                  return (
+                    <tr key={network.id} className="hover:bg-gray-50">
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Network className="h-4 w-4 text-orange-500" />
+                          <span className="font-medium text-gray-900">{network.name}</span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span className="rounded bg-gray-100 px-2 py-1 text-sm text-gray-600">
+                          {network.driver}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {network.scope}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-500">
+                        {getSubnet(network)}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {getConnectedCount(network)}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-500">
+                        {shortId}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </PageShell>
   )
 }

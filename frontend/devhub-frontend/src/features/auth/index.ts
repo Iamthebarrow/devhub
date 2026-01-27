@@ -7,6 +7,13 @@ export {
   selectUserRoles,
   selectCanOperateContainers,
   useCanOperateContainers,
+  // Phase 5
+  selectCanPullImages,
+  useCanPullImages,
+  selectIsAdmin,
+  useIsAdmin,
+  selectCanViewAudit,
+  useCanViewAudit,
 } from './authStore'
 export type { AuthStatus } from './authStore'
 export { AuthBootstrap } from './AuthBootstrap'

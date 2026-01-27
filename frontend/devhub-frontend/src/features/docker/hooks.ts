@@ -3,6 +3,7 @@
  *
  * Phase 3: Read-only hooks for system info and containers list.
  * Phase 4: Container detail, logs, and action mutations.
+ * Phase 5: Images, volumes, networks.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,6 +16,12 @@ import {
   startContainer,
   stopContainer,
   restartContainer,
+  // Phase 5
+  listImages,
+  pullImage,
+  removeImage,
+  listVolumes,
+  listNetworks,
 } from '../../api/docker'
 import type { ListContainersParams } from '../../api/docker'
 import type { ContainerLogsParams } from '../../api/types'
@@ -34,6 +41,13 @@ export const dockerKeys = {
   containerDetail: (id: string) => [...dockerKeys.containers(), 'detail', id] as const,
   containerLogs: (id: string, params?: ContainerLogsParams) =>
     [...dockerKeys.containers(), 'logs', id, params ?? {}] as const,
+  // Phase 5
+  images: () => [...dockerKeys.all, 'images'] as const,
+  imagesList: () => [...dockerKeys.images(), 'list'] as const,
+  volumes: () => [...dockerKeys.all, 'volumes'] as const,
+  volumesList: () => [...dockerKeys.volumes(), 'list'] as const,
+  networks: () => [...dockerKeys.all, 'networks'] as const,
+  networksList: () => [...dockerKeys.networks(), 'list'] as const,
 }
 
 // =============================================================================
@@ -173,5 +187,93 @@ export function useRestartContainer() {
       queryClient.invalidateQueries({ queryKey: dockerKeys.containers() })
       queryClient.invalidateQueries({ queryKey: dockerKeys.systemInfo() })
     },
+  })
+}
+
+// =============================================================================
+// Images Hooks (Phase 5)
+// =============================================================================
+
+/**
+ * Hook to fetch images list.
+ * Used in ImagesPage.
+ */
+export function useImages() {
+  return useQuery({
+    queryKey: dockerKeys.imagesList(),
+    queryFn: listImages,
+    staleTime: 30_000, // 30 seconds - images change less frequently than containers
+  })
+}
+
+/**
+ * Hook to pull an image.
+ * DEFAULT: Invalidates images query after 2s delay to allow backend to process.
+ */
+export function usePullImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (image: string) => pullImage(image),
+    onSuccess: () => {
+      // Invalidate images query after a short delay
+      // DEFAULT DECISION: 2s delay for async pull operation
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: dockerKeys.images() })
+        queryClient.invalidateQueries({ queryKey: dockerKeys.systemInfo() })
+      }, 2000)
+    },
+  })
+}
+
+/**
+ * Hook to remove an image.
+ * Admin-only UI. Backend enforces role check.
+ * DEFAULT: Invalidates images query after 2s delay.
+ */
+export function useRemoveImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, force }: { id: string; force?: boolean }) => removeImage(id, force),
+    onSuccess: () => {
+      // Invalidate images query after a short delay
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: dockerKeys.images() })
+        queryClient.invalidateQueries({ queryKey: dockerKeys.systemInfo() })
+      }, 2000)
+    },
+  })
+}
+
+// =============================================================================
+// Volumes Hooks (Phase 5)
+// =============================================================================
+
+/**
+ * Hook to fetch volumes list.
+ * Used in VolumesPage (read-only).
+ */
+export function useVolumes() {
+  return useQuery({
+    queryKey: dockerKeys.volumesList(),
+    queryFn: listVolumes,
+    staleTime: 60_000, // 1 minute - volumes change rarely
+  })
+}
+
+// =============================================================================
+// Networks Hooks (Phase 5)
+// =============================================================================
+
+/**
+ * Hook to fetch networks list.
+ * Used in NetworksPage (read-only).
+ */
+export function useNetworks() {
+  return useQuery({
+    queryKey: dockerKeys.networksList(),
+    queryFn: listNetworks,
+    staleTime: 60_000, // 1 minute - networks change rarely
   })
 }

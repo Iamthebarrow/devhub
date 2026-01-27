@@ -9,8 +9,17 @@ export {
   startContainer,
   stopContainer,
   restartContainer,
+  // Phase 5: Images
+  listImages,
+  pullImage,
+  removeImage,
+  // Phase 5: Volumes
+  listVolumes,
+  // Phase 5: Networks
+  listNetworks,
   DockerApiError,
 } from './docker'
-export type { ListContainersParams, ContainerLogsParams } from './docker'
+export type { ListContainersParams } from './docker'
+export { listAuditEvents, AuditApiError } from './audit'
 export type * from './types'
 export * from './zod'
