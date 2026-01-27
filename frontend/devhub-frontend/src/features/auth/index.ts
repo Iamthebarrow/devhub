@@ -4,6 +4,9 @@ export {
   selectAccessToken,
   selectUser,
   selectIsAuthenticated,
+  selectUserRoles,
+  selectCanOperateContainers,
+  useCanOperateContainers,
 } from './authStore'
 export type { AuthStatus } from './authStore'
 export { AuthBootstrap } from './AuthBootstrap'

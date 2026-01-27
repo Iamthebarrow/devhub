@@ -11,7 +11,7 @@
 export interface User {
   id: number
   username: string
-  email: string
+  email?: string
   roles: string[]
 }
 
@@ -33,7 +33,142 @@ export interface RefreshResponse {
 // Docker Types (Phase 3+)
 // =============================================================================
 
-// Placeholder - to be expanded based on backend API schema
+// Generic paginated result type
+export interface PagedResult<T> {
+  results: T[]
+  count: number
+}
+
+// Docker system info from /docker/system/info/
+export interface DockerSystemInfo {
+  containers: number
+  containers_running: number
+  containers_paused: number
+  containers_stopped: number
+  images: number
+  driver: string
+  memory_limit: boolean
+  swap_limit: boolean
+  kernel_memory: boolean
+  cpu_cfs_period: boolean
+  cpu_cfs_quota: boolean
+  cpu_shares: boolean
+  cpu_set: boolean
+  ipv4_forwarding: boolean
+  bridge_nf_iptables: boolean
+  bridge_nf_ip6tables: boolean
+  oom_kill_disable: boolean
+  logging_driver: string
+  cgroup_driver: string
+  n_events_listener: number
+  kernel_version: string
+  operating_system: string
+  os_type: string
+  architecture: string
+  ncpu: number
+  mem_total: number
+  docker_root_dir: string
+  name: string
+  labels: string[]
+  experimental_build: boolean
+  server_version: string
+}
+
+// Docker version info from /docker/system/version/
+export interface DockerSystemVersion {
+  platform: {
+    name: string
+  }
+  components: Array<{
+    name: string
+    version: string
+    details?: Record<string, string>
+  }>
+  version: string
+  api_version: string
+  min_api_version: string
+  git_commit: string
+  go_version: string
+  os: string
+  arch: string
+  kernel_version: string
+  build_time: string
+}
+
+// Container port mapping
+export interface ContainerPort {
+  ip?: string
+  private_port: number
+  public_port?: number
+  type: string
+}
+
+// Container summary from /docker/containers/
+export interface DockerContainerSummary {
+  id: string
+  names: string[]
+  image: string
+  image_id: string
+  command: string
+  created: number // Unix timestamp
+  ports: ContainerPort[]
+  labels: Record<string, string>
+  state: string
+  status: string
+  host_config: {
+    network_mode: string
+  }
+  network_settings: {
+    networks: Record<
+      string,
+      {
+        network_id: string
+        endpoint_id: string
+        gateway: string
+        ip_address: string
+        ip_prefix_len: number
+        mac_address: string
+      }
+    >
+  }
+  mounts: Array<{
+    type: string
+    name?: string
+    source: string
+    destination: string
+    driver?: string
+    mode: string
+    rw: boolean
+  }>
+}
+
+// =============================================================================
+// Container Detail Types (Phase 4)
+// =============================================================================
+
+// Full container detail from /docker/containers/{id}/
+// This is the same as DockerContainerSummary but aliased for clarity
+export type DockerContainerDetail = DockerContainerSummary
+
+// Container logs response
+// DEFAULT DECISION: Backend returns { logs: string }
+// If backend returns plain string, adapter in api/docker.ts handles it
+export interface ContainerLogsResponse {
+  logs: string
+}
+
+// Container logs request params
+export interface ContainerLogsParams {
+  tail?: number
+  since?: string
+}
+
+// Container action response (start/stop/restart)
+export interface ContainerActionResponse {
+  message: string
+}
+
+// Legacy container type for compatibility
 export interface Container {
   id: string
   name: string

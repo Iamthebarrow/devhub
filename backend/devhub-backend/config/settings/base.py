@@ -187,7 +187,7 @@ Use JWT Bearer tokens in the `Authorization` header.
 
 ### Getting a Token
 1. POST to `/api/v1/auth/login/` with `{"username": "...", "password": "..."}`
-2. Use the returned `access` token in the `Authorization: Bearer <token>` header
+2. Use the returned `access` token in the `Authorization: Bearer <token>` header. You are not required to pass `Bearer` in the body, the value of the access token. 
 3. Refresh tokens are stored in HttpOnly cookies and rotated automatically
 
 ## Rate Limiting

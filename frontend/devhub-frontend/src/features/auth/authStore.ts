@@ -59,3 +59,28 @@ export const selectAuthStatus = (state: AuthStore) => state.status
 export const selectAccessToken = (state: AuthStore) => state.accessToken
 export const selectUser = (state: AuthStore) => state.user
 export const selectIsAuthenticated = (state: AuthStore) => state.status === 'authenticated'
+export const selectUserRoles = (state: AuthStore) => state.user?.roles ?? []
+
+// =============================================================================
+// Role-based Access Helpers (Phase 4)
+// =============================================================================
+
+// Roles that can perform container lifecycle actions (start/stop/restart)
+const OPERATOR_ROLES = ['operator', 'admin']
+
+/**
+ * Check if user has permission to operate containers (start/stop/restart).
+ * Returns true if user has 'operator' or 'admin' role.
+ */
+export const selectCanOperateContainers = (state: AuthStore): boolean => {
+  const roles = state.user?.roles ?? []
+  return roles.some((role) => OPERATOR_ROLES.includes(role.toLowerCase()))
+}
+
+/**
+ * Hook to check if current user can operate containers.
+ * Convenience hook wrapping the selector.
+ */
+export function useCanOperateContainers(): boolean {
+  return useAuthStore(selectCanOperateContainers)
+}

@@ -17,11 +17,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-query-devtools": "^5.91.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
     "msw": "^2.12.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.10"

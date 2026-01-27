@@ -1,159 +1,673 @@
-import { useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
+import {
+  AlertCircle,
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Play,
+  RefreshCw,
+  Square,
+  RotateCw,
+} from 'lucide-react'
 import { PageShell } from '../components/layout/PageShell'
-import { Play, Square, RotateCcw, Trash2, Terminal } from 'lucide-react'
+import {
+  useContainer,
+  useContainerLogs,
+  useStartContainer,
+  useStopContainer,
+  useRestartContainer,
+} from '../features/docker'
+import { useCanOperateContainers } from '../features/auth'
+import type { DockerContainerSummary } from '../api/types'
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+// DEFAULT: Tail options for logs
+const TAIL_OPTIONS = [200, 500, 1000, 2000] as const
+const DEFAULT_TAIL = 200
+
+// DEFAULT: Auto-refresh interval for logs (3 seconds)
+const AUTO_REFRESH_INTERVAL_LABEL = '3s'
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+// Extract container name from names array (remove leading /)
+function getContainerName(container: DockerContainerSummary): string {
+  if (container.names.length === 0) return container.id.substring(0, 12)
+  return container.names[0].replace(/^\//, '')
+}
+
+// Format Unix timestamp to human readable date
+function formatCreated(timestamp: number): string {
+  const date = new Date(timestamp * 1000)
+  return date.toLocaleString()
+}
+
+// Format ports for display
+function formatPorts(ports: DockerContainerSummary['ports']): string {
+  if (!ports || ports.length === 0) return 'None'
+  return ports
+    .filter((p) => p.public_port)
+    .map((p) => `${p.public_port}:${p.private_port}/${p.type}`)
+    .join(', ') || 'None exposed'
+}
+
+// Get status badge color
+function getStatusColor(state: string): string {
+  switch (state.toLowerCase()) {
+    case 'running':
+      return 'bg-green-100 text-green-700'
+    case 'paused':
+      return 'bg-yellow-100 text-yellow-700'
+    case 'exited':
+    case 'dead':
+      return 'bg-gray-100 text-gray-700'
+    case 'restarting':
+      return 'bg-blue-100 text-blue-700'
+    default:
+      return 'bg-gray-100 text-gray-700'
+  }
+}
+
+// =============================================================================
+// Components
+// =============================================================================
+
+/**
+ * Confirm dialog for restart action.
+ */
+function ConfirmDialog({
+  isOpen,
+  onConfirm,
+  onCancel,
+  title,
+  message,
+  isLoading,
+}: {
+  isOpen: boolean
+  onConfirm: () => void
+  onCancel: () => void
+  title: string
+  message: string
+  isLoading: boolean
+}) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <p className="mt-2 text-sm text-gray-600">{message}</p>
+        <div className="mt-4 flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isLoading}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isLoading && <RefreshCw className="h-4 w-4 animate-spin" />}
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Actions bar for container lifecycle operations.
+ * Only visible to users with operator or admin role.
+ */
+function ActionsBar({
+  container,
+  canOperate,
+}: {
+  container: DockerContainerSummary
+  canOperate: boolean
+}) {
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false)
+
+  const startMutation = useStartContainer()
+  const stopMutation = useStopContainer()
+  const restartMutation = useRestartContainer()
+
+  const isRunning = container.state.toLowerCase() === 'running'
+  const isPaused = container.state.toLowerCase() === 'paused'
+  const isMutating = startMutation.isPending || stopMutation.isPending || restartMutation.isPending
+
+  // Handle start
+  const handleStart = () => {
+    startMutation.mutate(container.id, {
+      onSuccess: () => {
+        toast.success(`Container ${getContainerName(container)} started`)
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : 'Failed to start container')
+      },
+    })
+  }
+
+  // Handle stop
+  const handleStop = () => {
+    stopMutation.mutate(container.id, {
+      onSuccess: () => {
+        toast.success(`Container ${getContainerName(container)} stopped`)
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : 'Failed to stop container')
+      },
+    })
+  }
+
+  // Handle restart (with confirmation)
+  const handleRestartConfirm = () => {
+    restartMutation.mutate(container.id, {
+      onSuccess: () => {
+        toast.success(`Container ${getContainerName(container)} restarted`)
+        setShowRestartConfirm(false)
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : 'Failed to restart container')
+        setShowRestartConfirm(false)
+      },
+    })
+  }
+
+  if (!canOperate) return null
+
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        {/* Start button - only when not running */}
+        {!isRunning && (
+          <button
+            onClick={handleStart}
+            disabled={isMutating}
+            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            title="Start container"
+          >
+            {startMutation.isPending ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+            Start
+          </button>
+        )}
+
+        {/* Stop button - only when running or paused */}
+        {(isRunning || isPaused) && (
+          <button
+            onClick={handleStop}
+            disabled={isMutating}
+            className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            title="Stop container"
+          >
+            {stopMutation.isPending ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Square className="h-4 w-4" />
+            )}
+            Stop
+          </button>
+        )}
+
+        {/* Restart button - always visible */}
+        <button
+          onClick={() => setShowRestartConfirm(true)}
+          disabled={isMutating}
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          title="Restart container"
+        >
+          {restartMutation.isPending ? (
+            <RefreshCw className="h-4 w-4 animate-spin" />
+          ) : (
+            <RotateCw className="h-4 w-4" />
+          )}
+          Restart
+        </button>
+      </div>
+
+      {/* Restart confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showRestartConfirm}
+        onConfirm={handleRestartConfirm}
+        onCancel={() => setShowRestartConfirm(false)}
+        title="Restart Container"
+        message={`Are you sure you want to restart ${getContainerName(container)}? This will briefly interrupt the container.`}
+        isLoading={restartMutation.isPending}
+      />
+    </>
+  )
+}
+
+/**
+ * Logs panel with tail selector and auto-refresh toggle.
+ */
+function LogsPanel({ containerId }: { containerId: string }) {
+  const [tail, setTail] = useState<number>(DEFAULT_TAIL)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+
+  const { data, isLoading, isError, error, refetch } = useContainerLogs(
+    containerId,
+    { tail },
+    { autoRefresh }
+  )
+
+  // Copy logs to clipboard
+  const handleCopyLogs = () => {
+    if (data?.logs) {
+      navigator.clipboard.writeText(data.logs)
+      toast.success('Logs copied to clipboard')
+    }
+  }
+
+  return (
+    <div className="rounded-lg bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <h2 className="text-lg font-semibold text-gray-900">Logs</h2>
+        <div className="flex items-center gap-3">
+          {/* Tail selector */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="tail-select" className="text-sm text-gray-600">
+              Tail:
+            </label>
+            <select
+              id="tail-select"
+              value={tail}
+              onChange={(e) => setTail(Number(e.target.value))}
+              className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            >
+              {TAIL_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Auto-refresh toggle */}
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-600">
+              Auto-refresh ({AUTO_REFRESH_INTERVAL_LABEL})
+            </span>
+          </label>
+
+          {/* Copy logs button */}
+          <button
+            onClick={handleCopyLogs}
+            disabled={!data?.logs}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            title="Copy logs to clipboard"
+          >
+            <Copy className="h-4 w-4" />
+            Copy
+          </button>
+
+          {/* Refresh button */}
+          <button
+            onClick={() => refetch()}
+            disabled={isLoading}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
+            title="Refresh logs"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {/* Loading skeleton */}
+        {isLoading && !data && (
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${60 + Math.random() * 40}%` }} />
+            ))}
+          </div>
+        )}
+
+        {/* Error state */}
+        {isError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <p className="text-sm text-red-700">
+                  Failed to load logs: {error instanceof Error ? error.message : 'Unknown error'}
+                </p>
+              </div>
+              <button
+                onClick={() => refetch()}
+                className="flex items-center gap-1 rounded bg-red-100 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-200"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Logs content */}
+        {!isLoading && !isError && data && (
+          <pre className="max-h-[500px] overflow-auto whitespace-pre-wrap rounded-lg bg-gray-900 p-4 font-mono text-xs text-gray-100">
+            {data.logs || 'No logs available'}
+          </pre>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Labels section with collapsible display.
+ */
+function LabelsSection({ labels }: { labels: Record<string, string> }) {
+  const [expanded, setExpanded] = useState(false)
+  const entries = Object.entries(labels)
+
+  if (entries.length === 0) {
+    return (
+      <div className="text-sm text-gray-500">No labels</div>
+    )
+  }
+
+  const displayLabels = expanded ? entries : entries.slice(0, 3)
+  const hasMore = entries.length > 3
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {displayLabels.map(([key, value]) => (
+          <span
+            key={key}
+            className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+            title={`${key}=${value}`}
+          >
+            <span className="max-w-[100px] truncate">{key}</span>
+            <span className="mx-1">=</span>
+            <span className="max-w-[150px] truncate">{value}</span>
+          </span>
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+        >
+          {expanded ? (
+            <>
+              <ChevronDown className="h-3 w-3" />
+              Show less
+            </>
+          ) : (
+            <>
+              <ChevronRight className="h-3 w-3" />
+              Show {entries.length - 3} more
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  )
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
 
 /**
  * Container detail page.
- * Phase 1: Static placeholder showing container info and logs section.
- * Future phases will fetch from /docker/containers/{id}/ and /docker/containers/{id}/logs/
+ * Phase 4: Full detail, logs, and lifecycle actions with role-based visibility.
  */
 export function ContainerDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const canOperate = useCanOperateContainers()
 
-  // Placeholder container detail - will be fetched from API
-  const container = {
-    id: id || 'abc123',
-    name: 'nginx-proxy',
-    image: 'nginx:latest',
-    status: 'running',
-    created: '2024-01-15T10:30:00Z',
-    ports: [{ host: 8080, container: 80, protocol: 'tcp' }],
-    mounts: [{ source: '/data/nginx', destination: '/usr/share/nginx/html', mode: 'rw' }],
-    labels: { 'com.example.env': 'production', 'com.example.app': 'web' },
+  const { data: container, isLoading, isError, error, refetch } = useContainer(id ?? '')
+
+  // Shorten the container ID for display (first 12 chars like Docker CLI)
+  const shortId = id ? id.substring(0, 12) : 'unknown'
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageShell title={`Container ${shortId}`} description="Loading...">
+        <div className="space-y-6">
+          {/* Back link */}
+          <Link
+            to="/containers"
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Containers
+          </Link>
+
+          {/* Loading skeleton */}
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <div className="space-y-4">
+              <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${40 + Math.random() * 30}%` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    )
   }
 
-  const actions = (
-    <div className="flex gap-2">
-      <button className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">
-        <Play className="h-4 w-4" />
-        Start
-      </button>
-      <button className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700">
-        <Square className="h-4 w-4" />
-        Stop
-      </button>
-      <button className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-        <RotateCcw className="h-4 w-4" />
-        Restart
-      </button>
-      <button className="flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-red-600 hover:bg-red-50">
-        <Trash2 className="h-4 w-4" />
-        Remove
-      </button>
-    </div>
-  )
+  // Error state
+  if (isError) {
+    return (
+      <PageShell title={`Container ${shortId}`} description="Error loading container">
+        <div className="space-y-6">
+          {/* Back link */}
+          <Link
+            to="/containers"
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Containers
+          </Link>
+
+          {/* Error message */}
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-6 w-6 text-red-500" />
+                <div>
+                  <h3 className="font-medium text-red-900">Failed to load container</h3>
+                  <p className="mt-1 text-sm text-red-700">
+                    {error instanceof Error ? error.message : 'Unknown error'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => refetch()}
+                className="flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    )
+  }
+
+  // Container not found
+  if (!container) {
+    return (
+      <PageShell title={`Container ${shortId}`} description="Container not found">
+        <div className="space-y-6">
+          {/* Back link */}
+          <Link
+            to="/containers"
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Containers
+          </Link>
+
+          {/* Not found message */}
+          <div className="rounded-lg bg-white p-12 text-center shadow-sm">
+            <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-4 text-lg font-medium text-gray-900">Container not found</h3>
+            <p className="mt-2 text-sm text-gray-500">
+              The container with ID {shortId} could not be found.
+            </p>
+          </div>
+        </div>
+      </PageShell>
+    )
+  }
+
+  const containerName = getContainerName(container)
 
   return (
-    <PageShell title={container.name} description={`Container ID: ${container.id}`} actions={actions}>
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Container info */}
+    <PageShell
+      title={containerName}
+      description={`Container ${shortId}`}
+    >
+      <div className="space-y-6">
+        {/* Header with back link and actions */}
+        <div className="flex items-center justify-between">
+          <Link
+            to="/containers"
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Containers
+          </Link>
+
+          {/* Actions bar - only visible to operators/admins */}
+          <ActionsBar container={container} canOperate={canOperate} />
+        </div>
+
+        {/* Container details card */}
         <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Container Info</h2>
-          <dl className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-gray-500">Image</dt>
-              <dd className="font-medium text-gray-900">{container.image}</dd>
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">{containerName}</h2>
+              <p className="mt-1 font-mono text-sm text-gray-500">{container.id}</p>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">Status</dt>
-              <dd>
-                <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                  {container.status}
-                </span>
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(container.state)}`}
+            >
+              {container.state}
+            </span>
+          </div>
+
+          <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Image</dt>
+              <dd className="mt-1 font-mono text-sm text-gray-900">{container.image}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Status</dt>
+              <dd className="mt-1 text-sm text-gray-900">{container.status}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Created</dt>
+              <dd className="mt-1 text-sm text-gray-900">{formatCreated(container.created)}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Command</dt>
+              <dd className="mt-1 truncate font-mono text-sm text-gray-900" title={container.command}>
+                {container.command}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">Created</dt>
-              <dd className="font-medium text-gray-900">{container.created}</dd>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Ports</dt>
+              <dd className="mt-1 text-sm text-gray-900">{formatPorts(container.ports)}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Network Mode</dt>
+              <dd className="mt-1 text-sm text-gray-900">{container.host_config.network_mode}</dd>
             </div>
           </dl>
-        </div>
 
-        {/* Ports */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Ports</h2>
-          {container.ports.length > 0 ? (
-            <ul className="space-y-2 text-sm">
-              {container.ports.map((port, i) => (
-                <li key={i} className="flex justify-between">
-                  <span className="text-gray-500">{port.container}/{port.protocol}</span>
-                  <span className="font-medium text-gray-900">→ {port.host}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No ports exposed</p>
-          )}
-        </div>
-
-        {/* Mounts */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Mounts</h2>
-          {container.mounts.length > 0 ? (
-            <ul className="space-y-2 text-sm">
-              {container.mounts.map((mount, i) => (
-                <li key={i}>
-                  <div className="text-gray-500">{mount.source}</div>
-                  <div className="font-medium text-gray-900">→ {mount.destination} ({mount.mode})</div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No mounts</p>
-          )}
-        </div>
-
-        {/* Labels */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Labels</h2>
-          {Object.keys(container.labels).length > 0 ? (
-            <dl className="space-y-2 text-sm">
-              {Object.entries(container.labels).map(([key, value]) => (
-                <div key={key}>
-                  <dt className="text-gray-500">{key}</dt>
-                  <dd className="font-medium text-gray-900">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="text-sm text-gray-500">No labels</p>
-          )}
-        </div>
-      </div>
-
-      {/* Logs section */}
-      <div className="mt-6 rounded-lg bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Terminal className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Logs</h2>
+          {/* Labels section */}
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <h3 className="text-sm font-medium text-gray-500">Labels</h3>
+            <div className="mt-2">
+              <LabelsSection labels={container.labels} />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm text-gray-600">
-              <input type="checkbox" className="rounded border-gray-300" />
-              Auto-refresh
-            </label>
-            <select className="rounded border border-gray-300 px-2 py-1 text-sm">
-              <option value="100">Last 100 lines</option>
-              <option value="200">Last 200 lines</option>
-              <option value="500">Last 500 lines</option>
-            </select>
-          </div>
-        </div>
-        <div className="h-64 overflow-auto rounded bg-gray-900 p-4 font-mono text-sm text-gray-300">
-          <p className="text-gray-500"># Container logs will appear here in future phases</p>
-          <p>2024-01-20 10:30:15 [INFO] Server started on port 80</p>
-          <p>2024-01-20 10:30:16 [INFO] Ready to accept connections</p>
-          <p className="text-gray-500">...</p>
-        </div>
-      </div>
 
-      {/* Phase 1 notice */}
-      <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <p className="text-sm text-blue-700">
-          <strong>Phase 1:</strong> Placeholder data. Real container details and logs will be fetched
-          from the Docker API in future phases.
-        </p>
+          {/* Mounts section */}
+          {container.mounts.length > 0 && (
+            <div className="mt-6 border-t border-gray-200 pt-6">
+              <h3 className="text-sm font-medium text-gray-500">Mounts</h3>
+              <div className="mt-2 space-y-2">
+                {container.mounts.map((mount, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg bg-gray-50 p-3 text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-gray-200 px-1.5 py-0.5 text-xs font-medium text-gray-700">
+                        {mount.type}
+                      </span>
+                      <span className="text-gray-600">{mount.rw ? 'rw' : 'ro'}</span>
+                    </div>
+                    <div className="mt-1 font-mono text-xs text-gray-500">
+                      {mount.source} → {mount.destination}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Networks section */}
+          {Object.keys(container.network_settings.networks).length > 0 && (
+            <div className="mt-6 border-t border-gray-200 pt-6">
+              <h3 className="text-sm font-medium text-gray-500">Networks</h3>
+              <div className="mt-2 space-y-2">
+                {Object.entries(container.network_settings.networks).map(([name, network]) => (
+                  <div
+                    key={name}
+                    className="rounded-lg bg-gray-50 p-3 text-sm"
+                  >
+                    <div className="font-medium text-gray-900">{name}</div>
+                    {network.ip_address && (
+                      <div className="mt-1 font-mono text-xs text-gray-500">
+                        IP: {network.ip_address}
+                        {network.gateway && ` (Gateway: ${network.gateway})`}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Logs panel */}
+        {id && <LogsPanel containerId={id} />}
       </div>
     </PageShell>
   )
