@@ -39,64 +39,31 @@ export const ApiErrorSchema = z.object({
 // =============================================================================
 
 // Docker system info schema - partial validation (only critical fields)
+// Uses camelCase to match backend serializers
 export const DockerSystemInfoSchema = z.object({
   containers: z.number(),
-  containers_running: z.number(),
-  containers_paused: z.number(),
-  containers_stopped: z.number(),
+  containersRunning: z.number(),
+  containersPaused: z.number(),
+  containersStopped: z.number(),
   images: z.number(),
-  driver: z.string(),
-  kernel_version: z.string(),
-  operating_system: z.string(),
-  os_type: z.string(),
-  architecture: z.string(),
-  ncpu: z.number(),
-  mem_total: z.number(),
-  docker_root_dir: z.string(),
   name: z.string(),
-  server_version: z.string(),
-  // Optional fields with defaults
-  memory_limit: z.boolean().optional(),
-  swap_limit: z.boolean().optional(),
-  kernel_memory: z.boolean().optional(),
-  cpu_cfs_period: z.boolean().optional(),
-  cpu_cfs_quota: z.boolean().optional(),
-  cpu_shares: z.boolean().optional(),
-  cpu_set: z.boolean().optional(),
-  ipv4_forwarding: z.boolean().optional(),
-  bridge_nf_iptables: z.boolean().optional(),
-  bridge_nf_ip6tables: z.boolean().optional(),
-  oom_kill_disable: z.boolean().optional(),
-  logging_driver: z.string().optional(),
-  cgroup_driver: z.string().optional(),
-  n_events_listener: z.number().optional(),
-  labels: z.array(z.string()).optional(),
-  experimental_build: z.boolean().optional(),
+  operatingSystem: z.string().optional(),
+  osType: z.string().optional(),
+  architecture: z.string().optional(),
+  ncpu: z.number().optional(),
+  memTotal: z.number().optional(),
+  serverVersion: z.string().optional(),
+  id: z.string().optional(),
 })
 
-// Docker version schema
+// Docker version schema - uses camelCase to match backend serializers
 export const DockerSystemVersionSchema = z.object({
-  platform: z.object({
-    name: z.string(),
-  }),
-  components: z
-    .array(
-      z.object({
-        name: z.string(),
-        version: z.string(),
-        details: z.record(z.string(), z.string()).optional(),
-      })
-    )
-    .optional(),
-  version: z.string(),
-  api_version: z.string(),
-  min_api_version: z.string().optional(),
-  git_commit: z.string().optional(),
-  go_version: z.string().optional(),
-  os: z.string(),
-  arch: z.string(),
-  kernel_version: z.string().optional(),
-  build_time: z.string().optional(),
+  version: z.string().optional(),
+  apiVersion: z.string().optional(),
+  gitCommit: z.string().optional(),
+  goVersion: z.string().optional(),
+  os: z.string().optional(),
+  arch: z.string().optional(),
 })
 
 // Container port schema

@@ -40,59 +40,32 @@ export interface PagedResult<T> {
 }
 
 // Docker system info from /docker/system/info/
+// Uses camelCase to match backend serializers
 export interface DockerSystemInfo {
   containers: number
-  containers_running: number
-  containers_paused: number
-  containers_stopped: number
+  containersRunning: number
+  containersPaused: number
+  containersStopped: number
   images: number
-  driver: string
-  memory_limit: boolean
-  swap_limit: boolean
-  kernel_memory: boolean
-  cpu_cfs_period: boolean
-  cpu_cfs_quota: boolean
-  cpu_shares: boolean
-  cpu_set: boolean
-  ipv4_forwarding: boolean
-  bridge_nf_iptables: boolean
-  bridge_nf_ip6tables: boolean
-  oom_kill_disable: boolean
-  logging_driver: string
-  cgroup_driver: string
-  n_events_listener: number
-  kernel_version: string
-  operating_system: string
-  os_type: string
-  architecture: string
-  ncpu: number
-  mem_total: number
-  docker_root_dir: string
   name: string
-  labels: string[]
-  experimental_build: boolean
-  server_version: string
+  operatingSystem?: string
+  osType?: string
+  architecture?: string
+  ncpu?: number
+  memTotal?: number
+  serverVersion?: string
+  id?: string
 }
 
 // Docker version info from /docker/system/version/
+// Uses camelCase to match backend serializers
 export interface DockerSystemVersion {
-  platform: {
-    name: string
-  }
-  components: Array<{
-    name: string
-    version: string
-    details?: Record<string, string>
-  }>
-  version: string
-  api_version: string
-  min_api_version: string
-  git_commit: string
-  go_version: string
-  os: string
-  arch: string
-  kernel_version: string
-  build_time: string
+  version?: string
+  apiVersion?: string
+  gitCommit?: string
+  goVersion?: string
+  os?: string
+  arch?: string
 }
 
 // Container port mapping

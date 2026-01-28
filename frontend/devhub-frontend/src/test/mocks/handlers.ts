@@ -9,69 +9,31 @@ export const mockUser = {
   roles: ['admin'],
 }
 
-// Mock Docker system info
+// Mock Docker system info - uses camelCase to match backend serializers
 export const mockSystemInfo = {
   containers: 5,
-  containers_running: 3,
-  containers_paused: 0,
-  containers_stopped: 2,
+  containersRunning: 3,
+  containersPaused: 0,
+  containersStopped: 2,
   images: 15,
-  driver: 'overlay2',
-  memory_limit: true,
-  swap_limit: true,
-  kernel_memory: true,
-  cpu_cfs_period: true,
-  cpu_cfs_quota: true,
-  cpu_shares: true,
-  cpu_set: true,
-  ipv4_forwarding: true,
-  bridge_nf_iptables: true,
-  bridge_nf_ip6tables: true,
-  oom_kill_disable: true,
-  logging_driver: 'json-file',
-  cgroup_driver: 'systemd',
-  n_events_listener: 0,
-  kernel_version: '6.1.0-18-amd64',
-  operating_system: 'Ubuntu 22.04.3 LTS',
-  os_type: 'linux',
+  name: 'docker-host',
+  operatingSystem: 'Ubuntu 22.04.3 LTS',
+  osType: 'linux',
   architecture: 'x86_64',
   ncpu: 8,
-  mem_total: 16777216000, // ~16GB
-  docker_root_dir: '/var/lib/docker',
-  name: 'docker-host',
-  labels: [],
-  experimental_build: false,
-  server_version: '24.0.7',
+  memTotal: 16777216000, // ~16GB
+  serverVersion: '24.0.7',
+  id: 'ABC123',
 }
 
-// Mock Docker system version
+// Mock Docker system version - uses camelCase to match backend serializers
 export const mockSystemVersion = {
-  platform: {
-    name: 'Docker Engine - Community',
-  },
-  components: [
-    {
-      name: 'Engine',
-      version: '24.0.7',
-      details: {
-        ApiVersion: '1.43',
-        MinAPIVersion: '1.12',
-        GitCommit: 'afdd53b',
-        GoVersion: 'go1.21.3',
-        Os: 'linux',
-        Arch: 'amd64',
-      },
-    },
-  ],
   version: '24.0.7',
-  api_version: '1.43',
-  min_api_version: '1.12',
-  git_commit: 'afdd53b',
-  go_version: 'go1.21.3',
+  apiVersion: '1.43',
+  gitCommit: 'afdd53b',
+  goVersion: 'go1.21.3',
   os: 'linux',
   arch: 'amd64',
-  kernel_version: '6.1.0-18-amd64',
-  build_time: '2023-10-26T09:08:02.000000000+00:00',
 }
 
 // Mock containers list
