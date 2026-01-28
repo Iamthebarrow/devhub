@@ -42,6 +42,11 @@ See `.env.example` for defaults. The key variables are:
 - Ensure `CSRF_TRUSTED_ORIGINS` includes `http://localhost:5173`
 - If using refresh cookies, the frontend must send `credentials: "include"`
 
+### Accessing from another host (e.g., Tailscale)
+
+- Set `VITE_API_BASE_URL=http://server:8000/api/v1` in `.env` so the browser uses the reachable backend host.
+- Add `http://server:5173` to `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in `.env`.
+
 ### Backend not reaching Docker
 
 - The stack uses `docker-socket-proxy` by default.
