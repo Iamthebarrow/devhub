@@ -11,8 +11,8 @@ docker compose up --build
 
 ## Services
 
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000/api/v1/
+- **Frontend**: http://localhost:5173 (or http://server:5173 if accessing remotely)
+- **Backend API**: http://localhost:8000/api/v1/ (or http://server:8000/api/v1/)
 - **Swagger Docs**: http://localhost:8000/api/docs/
 - **OpenAPI Schema**: http://localhost:8000/api/schema/
 - **Health**: http://localhost:8000/api/v1/health/
