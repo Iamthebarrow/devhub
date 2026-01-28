@@ -80,8 +80,8 @@ This document tracks design decisions made during DevHub backend development.
 - DevHub never exposes raw Docker Engine API to browser
 
 **Local Development:**
-- DEFAULT: Direct socket mount for simplicity
-- Optional: Socket proxy can be enabled via docker-compose profile
+- DEFAULT: Socket proxy enabled in the root docker-compose for safer Docker API access
+- Optional: Direct socket mount is still available for trusted single-user setups (documented as insecure)
 
 ### ADR-007: Docker SDK vs Direct HTTP
 
