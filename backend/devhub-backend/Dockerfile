@@ -20,8 +20,12 @@ RUN pip install --no-cache-dir -e ".[dev]"
 # Copy project
 COPY . .
 
+RUN chmod +x /app/entrypoint.sh
+
 # Expose port
 EXPOSE 8000
 
-# Default command
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Default command (development)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -8,8 +8,14 @@
   --color-sidebar-hover: #334155;
 }
 
+.dark {
+  --color-sidebar-bg: #0f172a;
+  --color-sidebar-text: #e2e8f0;
+  --color-sidebar-hover: #1e293b;
+}
+
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-gray-50 text-gray-900 antialiased dark:bg-slate-900 dark:text-slate-100;
   margin: 0;
   min-height: 100vh;
 }

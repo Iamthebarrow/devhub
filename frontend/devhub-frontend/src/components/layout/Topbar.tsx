@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
-import { User, LogOut, Menu } from 'lucide-react'
+import { User, LogOut, Menu, Moon, Sun } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuthStore } from '../../features/auth'
 import { logout } from '../../api/auth'
+import { useThemeStore } from '../../features/theme'
 
 interface TopbarProps {
   sidebarCollapsed: boolean
@@ -21,6 +22,8 @@ export function Topbar({ sidebarCollapsed, onMenuClick }: TopbarProps) {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const clearAuth = useAuthStore((state) => state.clearAuth)
+  const themeMode = useThemeStore((state) => state.mode)
+  const toggleTheme = useThemeStore((state) => state.toggleMode)
 
   const handleLogout = async () => {
     try {
@@ -38,24 +41,34 @@ export function Topbar({ sidebarCollapsed, onMenuClick }: TopbarProps) {
   return (
     <header
       className={clsx(
-        'fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 transition-all duration-300',
+        'fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950',
         sidebarCollapsed ? 'left-16' : 'left-64'
       )}
     >
       {/* Mobile menu button - visible on small screens */}
-      <button
-        onClick={onMenuClick}
-        className="rounded p-2 text-gray-500 hover:bg-gray-100 lg:hidden"
-        aria-label="Toggle menu"
-      >
-        <Menu size={20} />
-      </button>
+        <button
+          onClick={onMenuClick}
+          className="rounded p-2 text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800 lg:hidden"
+          aria-label="Toggle menu"
+        >
+          <Menu size={20} />
+        </button>
 
       {/* Page area - can be used for breadcrumbs or title */}
       <div className="flex-1" />
 
       {/* User section */}
       <div className="flex items-center gap-4">
+        <button
+          onClick={toggleTheme}
+          className="rounded p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          aria-label="Toggle dark mode"
+          aria-pressed={themeMode === 'dark'}
+          title="Toggle dark mode"
+        >
+          {themeMode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
         {/* Role badges */}
         {user?.roles && user.roles.length > 0 && (
           <div className="hidden items-center gap-1 sm:flex">
@@ -76,9 +89,9 @@ export function Topbar({ sidebarCollapsed, onMenuClick }: TopbarProps) {
         {/* User info */}
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
-            <User size={16} className="text-gray-600" />
+            <User size={16} className="text-gray-600 dark:text-slate-200" />
           </div>
-          <span className="hidden text-sm font-medium text-gray-700 sm:block">
+          <span className="hidden text-sm font-medium text-gray-700 dark:text-slate-200 sm:block">
             {user?.username || 'Unknown'}
           </span>
         </div>
@@ -86,7 +99,7 @@ export function Topbar({ sidebarCollapsed, onMenuClick }: TopbarProps) {
         {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="rounded p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          className="rounded p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           aria-label="Logout"
           title="Logout"
         >

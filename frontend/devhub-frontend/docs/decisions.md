@@ -102,6 +102,24 @@ src/
 - Personal preference aligned with modern JS conventions
 - Works well with TypeScript
 
+### Decision 9: Dockerized Vite Dev Server
+
+**Choice:** Run the Vite dev server in a container for local Docker Compose development.
+
+**Rationale:**
+- Matches the backend containerized workflow for a single `docker compose up --build`
+- Enables hot reload with bind-mounted source
+- Keeps frontend dev dependencies contained in the image
+
+### Decision 10: Theme Toggle (Dark Mode)
+
+**Choice:** Store theme preference in Zustand with `dark` class on `<html>`.
+
+**Rationale:**
+- Keeps theme state consistent with existing client state patterns
+- Uses Tailwind's `dark:` variants without extra config
+- Persists preference in localStorage while supporting system default
+
 ---
 
 ## Future Phases (Planned)
