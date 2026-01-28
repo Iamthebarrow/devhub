@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ImagesPage } from '../../pages/ImagesPage'
 import { ContainerDetailPage } from '../../pages/ContainerDetailPage'
 import { useAuthStore } from './authStore'
+import { mockContainers } from '../../test/mocks/handlers'
 import type { User } from '../../api/types'
 
 const createTestQueryClient = () =>
@@ -162,7 +163,8 @@ describe('Role-based UI visibility', () => {
   })
 
   describe('ContainerDetailPage - action buttons', () => {
-    const containerId = 'abc123def456abc123def456abc123def456abc123def456abc123def456abc1'
+    // Use the first mock container ID (nginx-proxy, running)
+    const containerId = mockContainers[0].id
 
     describe('viewer role', () => {
       beforeEach(() => {

@@ -36,98 +36,40 @@ export const mockSystemVersion = {
   arch: 'amd64',
 }
 
-// Mock containers list
+// Mock containers list - matches backend ContainerSummarySerializer
 export const mockContainers = [
   {
-    id: 'abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
-    names: ['/nginx-proxy'],
+    id: 'abc123def456',
+    name: 'nginx-proxy',
     image: 'nginx:latest',
-    image_id: 'sha256:abc123',
-    command: 'nginx -g "daemon off;"',
-    created: Math.floor(Date.now() / 1000) - 86400 * 2, // 2 days ago
-    ports: [
-      { ip: '0.0.0.0', private_port: 80, public_port: 8080, type: 'tcp' },
-      { ip: '0.0.0.0', private_port: 443, public_port: 8443, type: 'tcp' },
-    ],
-    labels: { 'com.example.env': 'production' },
     state: 'running',
     status: 'Up 2 days',
-    host_config: { network_mode: 'bridge' },
-    network_settings: {
-      networks: {
-        bridge: {
-          network_id: 'net123',
-          endpoint_id: 'ep123',
-          gateway: '172.17.0.1',
-          ip_address: '172.17.0.2',
-          ip_prefix_len: 16,
-          mac_address: '02:42:ac:11:00:02',
-        },
-      },
-    },
-    mounts: [],
+    created: new Date(Date.now() - 86400 * 2 * 1000).toISOString(),
+    ports: [
+      { containerPort: 80, hostPort: 8080, hostIp: '0.0.0.0', protocol: 'tcp' },
+      { containerPort: 443, hostPort: 8443, hostIp: '0.0.0.0', protocol: 'tcp' },
+    ],
+    labels: { 'com.example.env': 'production' },
   },
   {
-    id: 'def456ghi789def456ghi789def456ghi789def456ghi789def456ghi789def4',
-    names: ['/postgres-db'],
+    id: 'def456ghi789',
+    name: 'postgres-db',
     image: 'postgres:15',
-    image_id: 'sha256:def456',
-    command: 'docker-entrypoint.sh postgres',
-    created: Math.floor(Date.now() / 1000) - 3600 * 5, // 5 hours ago
-    ports: [{ ip: '0.0.0.0', private_port: 5432, public_port: 5432, type: 'tcp' }],
-    labels: { 'com.example.service': 'database' },
     state: 'running',
     status: 'Up 5 hours',
-    host_config: { network_mode: 'bridge' },
-    network_settings: {
-      networks: {
-        bridge: {
-          network_id: 'net123',
-          endpoint_id: 'ep456',
-          gateway: '172.17.0.1',
-          ip_address: '172.17.0.3',
-          ip_prefix_len: 16,
-          mac_address: '02:42:ac:11:00:03',
-        },
-      },
-    },
-    mounts: [
-      {
-        type: 'volume',
-        name: 'postgres-data',
-        source: '/var/lib/docker/volumes/postgres-data/_data',
-        destination: '/var/lib/postgresql/data',
-        driver: 'local',
-        mode: 'rw',
-        rw: true,
-      },
-    ],
+    created: new Date(Date.now() - 3600 * 5 * 1000).toISOString(),
+    ports: [{ containerPort: 5432, hostPort: 5432, hostIp: '0.0.0.0', protocol: 'tcp' }],
+    labels: { 'com.example.service': 'database' },
   },
   {
-    id: 'ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi7',
-    names: ['/redis-cache'],
+    id: 'ghi789jkl012',
+    name: 'redis-cache',
     image: 'redis:alpine',
-    image_id: 'sha256:ghi789',
-    command: 'redis-server',
-    created: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
-    ports: [],
-    labels: {},
     state: 'exited',
     status: 'Exited (0) 1 hour ago',
-    host_config: { network_mode: 'bridge' },
-    network_settings: {
-      networks: {
-        bridge: {
-          network_id: 'net123',
-          endpoint_id: '',
-          gateway: '',
-          ip_address: '',
-          ip_prefix_len: 0,
-          mac_address: '',
-        },
-      },
-    },
-    mounts: [],
+    created: new Date(Date.now() - 3600 * 1000).toISOString(),
+    ports: [],
+    labels: {},
   },
 ]
 
@@ -292,7 +234,7 @@ export const handlers = [
       const search = searchFilter.toLowerCase()
       filteredContainers = filteredContainers.filter(
         (c) =>
-          c.names.some((n) => n.toLowerCase().includes(search)) ||
+          c.name.toLowerCase().includes(search) ||
           c.image.toLowerCase().includes(search)
       )
     }
@@ -307,7 +249,7 @@ export const handlers = [
   // Docker Container Detail & Actions (Phase 4)
   // ==========================================================================
 
-  // Container detail by ID
+  // Container detail by ID - returns extended format with mounts, networks, restartPolicy
   http.get(`${API_BASE_URL}/docker/containers/:id/`, ({ request, params }) => {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -327,7 +269,18 @@ export const handlers = [
       )
     }
 
-    return HttpResponse.json(container)
+    // Build container detail with extended fields
+    const containerDetail = {
+      ...container,
+      fullId: container.id + '00000000000000000000000000000000000000000000',
+      mounts: container.name === 'postgres-db'
+        ? [{ target: '/var/lib/postgresql/data', type: 'volume', readOnly: false }]
+        : [],
+      networks: [{ name: 'bridge', ipAddress: '172.17.0.' + (mockContainers.indexOf(container) + 2) }],
+      restartPolicy: { name: 'no', maximumRetryCount: 0 },
+    }
+
+    return HttpResponse.json(containerDetail)
   }),
 
   // Container logs
@@ -354,13 +307,13 @@ export const handlers = [
     const tail = url.searchParams.get('tail') || '200'
 
     // Generate mock logs based on container name
-    const containerName = container.names[0].replace(/^\//, '')
+    const containerName = container.name
     const mockLogLines = [
       `[${new Date().toISOString()}] ${containerName} started`,
       `[${new Date().toISOString()}] Initializing...`,
       `[${new Date().toISOString()}] Configuration loaded`,
       `[${new Date().toISOString()}] Service ready`,
-      `[${new Date().toISOString()}] Listening on port ${container.ports[0]?.private_port || 8080}`,
+      `[${new Date().toISOString()}] Listening on port ${container.ports[0]?.containerPort || 8080}`,
     ]
 
     // Repeat lines to match tail count (simplified)
@@ -533,8 +486,8 @@ export const handlers = [
     }
 
     return HttpResponse.json({
-      volumes: mockVolumes,
-      warnings: [],
+      results: mockVolumes,
+      count: mockVolumes.length,
     })
   }),
 
@@ -583,147 +536,83 @@ export const handlers = [
 // Mock Data for Phase 5
 // ==========================================================================
 
+// Mock images - matches backend ImageSummarySerializer
 export const mockImages = [
   {
-    id: 'sha256:abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
-    repo_tags: ['nginx:latest'],
-    repo_digests: ['nginx@sha256:abc123'],
-    parent_id: '',
+    id: 'sha256:abc123def456',
+    fullId: 'sha256:abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
+    tags: ['nginx:latest'],
     size: 142000000, // ~142MB
-    virtual_size: 142000000,
-    shared_size: 0,
+    created: new Date(Date.now() - 86400 * 14 * 1000).toISOString(), // 2 weeks ago
     labels: { maintainer: 'NGINX Docker Maintainers' },
-    containers: 1,
-    created: Math.floor(Date.now() / 1000) - 86400 * 14, // 2 weeks ago
   },
   {
-    id: 'sha256:def456ghi789def456ghi789def456ghi789def456ghi789def456ghi789def4',
-    repo_tags: ['postgres:15'],
-    repo_digests: ['postgres@sha256:def456'],
-    parent_id: '',
+    id: 'sha256:def456ghi789',
+    fullId: 'sha256:def456ghi789def456ghi789def456ghi789def456ghi789def456ghi789def4',
+    tags: ['postgres:15'],
     size: 379000000, // ~379MB
-    virtual_size: 379000000,
-    shared_size: 0,
-    labels: null,
-    containers: 1,
-    created: Math.floor(Date.now() / 1000) - 86400 * 30, // 1 month ago
+    created: new Date(Date.now() - 86400 * 30 * 1000).toISOString(), // 1 month ago
   },
   {
-    id: 'sha256:ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi7',
-    repo_tags: ['redis:alpine'],
-    repo_digests: ['redis@sha256:ghi789'],
-    parent_id: '',
+    id: 'sha256:ghi789jkl012',
+    fullId: 'sha256:ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi7',
+    tags: ['redis:alpine'],
     size: 32000000, // ~32MB
-    virtual_size: 32000000,
-    shared_size: 0,
-    labels: null,
-    containers: 1,
-    created: Math.floor(Date.now() / 1000) - 86400 * 21, // 3 weeks ago
+    created: new Date(Date.now() - 86400 * 21 * 1000).toISOString(), // 3 weeks ago
   },
 ]
 
+// Mock volumes - matches backend VolumeSummarySerializer
+// Note: mountpoint is not exposed for security reasons
 export const mockVolumes = [
   {
     name: 'postgres-data',
     driver: 'local',
-    mountpoint: '/var/lib/docker/volumes/postgres-data/_data',
-    created_at: '2024-01-10T10:00:00Z',
-    status: {},
-    labels: { 'com.example.service': 'database' },
     scope: 'local',
-    options: null,
-    usage_data: {
-      size: 524288000, // ~500MB
-      ref_count: 1,
-    },
+    created: '2024-01-10T10:00:00Z',
+    labels: { 'com.example.service': 'database' },
   },
   {
     name: 'redis-data',
     driver: 'local',
-    mountpoint: '/var/lib/docker/volumes/redis-data/_data',
-    created_at: '2024-01-12T14:30:00Z',
-    status: {},
-    labels: null,
     scope: 'local',
-    options: null,
-    usage_data: {
-      size: 10485760, // ~10MB
-      ref_count: 0,
-    },
+    created: '2024-01-12T14:30:00Z',
   },
   {
     name: 'app-uploads',
     driver: 'local',
-    mountpoint: '/var/lib/docker/volumes/app-uploads/_data',
-    created_at: '2024-01-15T09:15:00Z',
-    status: {},
-    labels: null,
     scope: 'local',
-    options: null,
+    created: '2024-01-15T09:15:00Z',
   },
 ]
 
+// Mock networks - matches backend NetworkSummarySerializer
 export const mockNetworks = [
   {
-    id: 'abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
+    id: 'abc123def456',
     name: 'bridge',
     driver: 'bridge',
     scope: 'local',
-    created: '2024-01-01T00:00:00Z',
     internal: false,
-    attachable: false,
-    ingress: false,
-    ipam: {
-      driver: 'default',
-      config: [{ subnet: '172.17.0.0/16', gateway: '172.17.0.1' }],
-    },
-    enable_ipv6: false,
-    containers: {
-      'abc123': {
-        name: 'nginx-proxy',
-        endpoint_id: 'ep123',
-        mac_address: '02:42:ac:11:00:02',
-        ipv4_address: '172.17.0.2/16',
-        ipv6_address: '',
-      },
-    },
-    options: { 'com.docker.network.bridge.default_bridge': 'true' },
+    subnets: ['172.17.0.0/16'],
     labels: {},
   },
   {
-    id: 'def456ghi789def456ghi789def456ghi789def456ghi789def456ghi789def4',
+    id: 'def456ghi789',
     name: 'host',
     driver: 'host',
     scope: 'local',
-    created: '2024-01-01T00:00:00Z',
     internal: false,
-    attachable: false,
-    ingress: false,
-    ipam: {
-      driver: 'default',
-      config: [],
-    },
-    enable_ipv6: false,
-    containers: {},
-    options: {},
+    subnets: [],
     labels: {},
   },
   {
-    id: 'ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi7',
+    id: 'ghi789jkl012',
     name: 'devhub_network',
     driver: 'bridge',
     scope: 'local',
-    created: '2024-01-05T12:00:00Z',
     internal: false,
-    attachable: true,
-    ingress: false,
-    ipam: {
-      driver: 'default',
-      config: [{ subnet: '172.18.0.0/16', gateway: '172.18.0.1' }],
-    },
-    enable_ipv6: false,
-    containers: {},
-    options: {},
+    subnets: ['172.18.0.0/16'],
     labels: { 'com.docker.compose.project': 'devhub' },
   },
 ]

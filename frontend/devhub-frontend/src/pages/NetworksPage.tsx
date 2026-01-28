@@ -6,21 +6,14 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { DockerNetwork } from '../api/types'
 
 /**
- * Get primary subnet from IPAM config.
+ * Get primary subnet from subnets array.
+ * Backend provides subnets as a simple array of strings.
  */
 function getSubnet(network: DockerNetwork): string {
-  const config = network.ipam?.config?.[0]
-  if (config?.subnet) {
-    return config.subnet
+  if (network.subnets && network.subnets.length > 0) {
+    return network.subnets[0]
   }
   return '—'
-}
-
-/**
- * Get connected containers count.
- */
-function getConnectedCount(network: DockerNetwork): number {
-  return Object.keys(network.containers || {}).length
 }
 
 /**
@@ -142,10 +135,10 @@ export function NetworksPage() {
                     Scope
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    IPAM Subnet
+                    Subnet
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Containers
+                    Internal
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Network ID
@@ -175,7 +168,7 @@ export function NetworksPage() {
                         {getSubnet(network)}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                        {getConnectedCount(network)}
+                        {network.internal ? 'Yes' : 'No'}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-500">
                         {shortId}

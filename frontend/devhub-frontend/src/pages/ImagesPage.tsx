@@ -19,11 +19,12 @@ function formatSize(bytes: number): string {
 }
 
 /**
- * Format Unix timestamp to relative time.
+ * Format ISO date string to relative time.
  */
-function formatRelativeTime(timestamp: number): string {
-  const now = Date.now() / 1000
-  const diff = now - timestamp
+function formatRelativeTime(isoDate: string): string {
+  const date = new Date(isoDate)
+  const now = Date.now()
+  const diff = (now - date.getTime()) / 1000
 
   if (diff < 60) return 'just now'
   if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
@@ -34,14 +35,14 @@ function formatRelativeTime(timestamp: number): string {
 }
 
 /**
- * Parse image name from repo_tags.
+ * Parse image name from tags array.
  */
 function parseImageName(image: DockerImageSummary): { name: string; tag: string } {
-  if (image.repo_tags.length === 0 || image.repo_tags[0] === '<none>:<none>') {
+  if (image.tags.length === 0 || image.tags[0] === '<none>:<none>') {
     // Use first 12 chars of ID
     return { name: image.id.replace('sha256:', '').slice(0, 12), tag: '<none>' }
   }
-  const [fullName, tag = 'latest'] = image.repo_tags[0].split(':')
+  const [fullName, tag = 'latest'] = image.tags[0].split(':')
   return { name: fullName, tag }
 }
 

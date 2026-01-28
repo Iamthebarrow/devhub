@@ -66,53 +66,24 @@ export const DockerSystemVersionSchema = z.object({
   arch: z.string().optional(),
 })
 
-// Container port schema
+// Container port schema - matches backend ContainerPortSerializer
 export const ContainerPortSchema = z.object({
-  ip: z.string().optional(),
-  private_port: z.number(),
-  public_port: z.number().optional(),
-  type: z.string(),
+  containerPort: z.number(),
+  hostPort: z.number().nullable().optional(),
+  hostIp: z.string().optional(),
+  protocol: z.string(),
 })
 
-// Container summary schema
+// Container summary schema - matches backend ContainerSummarySerializer
 export const DockerContainerSummarySchema = z.object({
   id: z.string(),
-  names: z.array(z.string()),
+  name: z.string(),
   image: z.string(),
-  image_id: z.string(),
-  command: z.string(),
-  created: z.number(),
-  ports: z.array(ContainerPortSchema),
-  labels: z.record(z.string(), z.string()),
   state: z.string(),
   status: z.string(),
-  host_config: z.object({
-    network_mode: z.string(),
-  }),
-  network_settings: z.object({
-    networks: z.record(
-      z.string(),
-      z.object({
-        network_id: z.string(),
-        endpoint_id: z.string(),
-        gateway: z.string(),
-        ip_address: z.string(),
-        ip_prefix_len: z.number(),
-        mac_address: z.string(),
-      })
-    ),
-  }),
-  mounts: z.array(
-    z.object({
-      type: z.string(),
-      name: z.string().optional(),
-      source: z.string(),
-      destination: z.string(),
-      driver: z.string().optional(),
-      mode: z.string(),
-      rw: z.boolean(),
-    })
-  ),
+  created: z.string(),
+  ports: z.array(ContainerPortSchema),
+  labels: z.record(z.string(), z.string()),
 })
 
 // Paginated containers list schema
@@ -125,8 +96,32 @@ export const ContainersListSchema = z.object({
 // Container Detail Schemas (Phase 4)
 // =============================================================================
 
-// Container detail is same as summary (reuse the schema)
-export const DockerContainerDetailSchema = DockerContainerSummarySchema
+// Container mount schema - matches backend ContainerMountSerializer
+const ContainerMountSchema = z.object({
+  target: z.string(),
+  type: z.string(),
+  readOnly: z.boolean(),
+})
+
+// Container network schema - matches backend ContainerNetworkSerializer
+const ContainerNetworkSchema = z.object({
+  name: z.string(),
+  ipAddress: z.string(),
+})
+
+// Restart policy schema - matches backend RestartPolicySerializer
+const RestartPolicySchema = z.object({
+  name: z.string(),
+  maximumRetryCount: z.number(),
+})
+
+// Container detail extends summary with additional fields - matches backend ContainerDetailSerializer
+export const DockerContainerDetailSchema = DockerContainerSummarySchema.extend({
+  fullId: z.string(),
+  mounts: z.array(ContainerMountSchema),
+  networks: z.array(ContainerNetworkSchema),
+  restartPolicy: RestartPolicySchema,
+})
 
 // Container logs response schema
 // DEFAULT DECISION: Backend returns { logs: string }
@@ -144,17 +139,14 @@ export const ContainerActionResponseSchema = z.object({
 // Image Schemas (Phase 5)
 // =============================================================================
 
+// Image summary schema - matches backend ImageSummarySerializer
 export const DockerImageSummarySchema = z.object({
   id: z.string(),
-  repo_tags: z.array(z.string()),
-  repo_digests: z.array(z.string()),
-  parent_id: z.string(),
+  fullId: z.string(),
+  tags: z.array(z.string()),
   size: z.number(),
-  virtual_size: z.number(),
-  shared_size: z.number(),
-  labels: z.record(z.string(), z.string()).nullable(),
-  containers: z.number(),
-  created: z.number(),
+  created: z.string(),
+  labels: z.record(z.string(), z.string()).optional(),
 })
 
 export const ImagesListSchema = z.object({
@@ -172,64 +164,35 @@ export const QueuedTaskResponseSchema = z.object({
 // Volume Schemas (Phase 5)
 // =============================================================================
 
+// Volume summary schema - matches backend VolumeSummarySerializer
+// Note: mountpoint is not exposed for security
 export const DockerVolumeSchema = z.object({
   name: z.string(),
   driver: z.string(),
-  mountpoint: z.string(),
-  created_at: z.string(),
-  status: z.record(z.string(), z.string()).optional(),
-  labels: z.record(z.string(), z.string()).nullable(),
   scope: z.string(),
-  options: z.record(z.string(), z.string()).nullable(),
-  usage_data: z
-    .object({
-      size: z.number(),
-      ref_count: z.number(),
-    })
-    .optional(),
+  created: z.string().optional(),
+  labels: z.record(z.string(), z.string()).optional(),
 })
 
+// Volume list response - matches backend VolumeListResponseSerializer
 export const VolumesListResponseSchema = z.object({
-  volumes: z.array(DockerVolumeSchema),
-  warnings: z.array(z.string()).optional(),
+  results: z.array(DockerVolumeSchema),
+  count: z.number(),
 })
 
 // =============================================================================
 // Network Schemas (Phase 5)
 // =============================================================================
 
+// Network summary schema - matches backend NetworkSummarySerializer
 export const DockerNetworkSchema = z.object({
   id: z.string(),
   name: z.string(),
   driver: z.string(),
   scope: z.string(),
-  created: z.string(),
   internal: z.boolean(),
-  attachable: z.boolean(),
-  ingress: z.boolean(),
-  ipam: z.object({
-    driver: z.string(),
-    config: z.array(
-      z.object({
-        subnet: z.string().optional(),
-        gateway: z.string().optional(),
-        ip_range: z.string().optional(),
-      })
-    ),
-  }),
-  enable_ipv6: z.boolean(),
-  containers: z.record(
-    z.string(),
-    z.object({
-      name: z.string(),
-      endpoint_id: z.string(),
-      mac_address: z.string(),
-      ipv4_address: z.string(),
-      ipv6_address: z.string(),
-    })
-  ),
-  options: z.record(z.string(), z.string()),
-  labels: z.record(z.string(), z.string()),
+  subnets: z.array(z.string()).optional(),
+  labels: z.record(z.string(), z.string()).optional(),
 })
 
 export const NetworksListSchema = z.object({
