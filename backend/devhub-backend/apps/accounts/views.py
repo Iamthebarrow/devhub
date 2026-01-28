@@ -167,11 +167,10 @@ class RefreshView(APIView):
             if settings.SIMPLE_JWT.get("ROTATE_REFRESH_TOKENS", False):
                 # Blacklist the old token
                 refresh.blacklist()
-                # Generate new refresh token
-                new_refresh = RefreshToken.for_user(refresh.access_token.payload)
-                # Actually we need to get user from the token
-                from django.contrib.auth.models import User
+                # Get user from the token payload and generate new refresh token
+                from django.contrib.auth import get_user_model
 
+                User = get_user_model()
                 user_id = refresh.access_token.payload.get("user_id")
                 user = User.objects.get(id=user_id)
                 new_refresh = RefreshToken.for_user(user)

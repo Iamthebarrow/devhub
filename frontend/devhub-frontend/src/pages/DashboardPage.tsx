@@ -52,9 +52,9 @@ export function DashboardPage() {
       value: isLoading
         ? '—'
         : systemInfo
-          ? `${systemInfo.containers_running}/${systemInfo.containers}`
+          ? `${systemInfo.containersRunning}/${systemInfo.containers}`
           : '—',
-      subtext: isLoading ? '' : systemInfo ? `${systemInfo.containers_running} running` : '',
+      subtext: isLoading ? '' : systemInfo ? `${systemInfo.containersRunning} running` : '',
       icon: Box,
       color: 'bg-blue-500',
     },
@@ -66,7 +66,7 @@ export function DashboardPage() {
     },
     {
       label: 'Memory',
-      value: isLoading ? '—' : systemInfo ? formatBytes(systemInfo.mem_total) : '—',
+      value: isLoading ? '—' : systemInfo?.memTotal ? formatBytes(systemInfo.memTotal) : '—',
       icon: Database,
       color: 'bg-purple-500',
     },
@@ -154,27 +154,27 @@ export function DashboardPage() {
               <div className="flex justify-between">
                 <span className="text-gray-500">Docker Version</span>
                 <span className="font-medium text-gray-900">
-                  {systemVersion?.version ?? systemInfo?.server_version ?? '—'}
+                  {systemVersion?.version ?? systemInfo?.serverVersion ?? '—'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">API Version</span>
                 <span className="font-medium text-gray-900">
-                  {systemVersion?.api_version ?? '—'}
+                  {systemVersion?.apiVersion ?? '—'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">OS/Arch</span>
                 <span className="font-medium text-gray-900">
                   {systemInfo
-                    ? `${systemInfo.operating_system} / ${systemInfo.architecture}`
+                    ? `${systemInfo.operatingSystem ?? '—'} / ${systemInfo.architecture ?? '—'}`
                     : '—'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Kernel Version</span>
+                <span className="text-gray-500">Host Name</span>
                 <span className="font-medium text-gray-900">
-                  {systemInfo?.kernel_version ?? '—'}
+                  {systemInfo?.name ?? '—'}
                 </span>
               </div>
             </div>
@@ -201,7 +201,7 @@ export function DashboardPage() {
               <div className="flex justify-between">
                 <span className="text-gray-500">Total Memory</span>
                 <span className="font-medium text-gray-900">
-                  {systemInfo ? formatBytes(systemInfo.mem_total) : '—'}
+                  {systemInfo?.memTotal ? formatBytes(systemInfo.memTotal) : '—'}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -209,13 +209,15 @@ export function DashboardPage() {
                 <span className="font-medium text-gray-900">{systemInfo?.ncpu ?? '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Storage Driver</span>
-                <span className="font-medium text-gray-900">{systemInfo?.driver ?? '—'}</span>
+                <span className="text-gray-500">OS Type</span>
+                <span className="font-medium text-gray-900">{systemInfo?.osType ?? '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Docker Root Dir</span>
-                <span className="max-w-[200px] truncate font-medium text-gray-900" title={systemInfo?.docker_root_dir}>
-                  {systemInfo?.docker_root_dir ?? '—'}
+                <span className="text-gray-500">Container Stats</span>
+                <span className="font-medium text-gray-900">
+                  {systemInfo
+                    ? `${systemInfo.containersRunning} running, ${systemInfo.containersStopped} stopped`
+                    : '—'}
                 </span>
               </div>
             </div>

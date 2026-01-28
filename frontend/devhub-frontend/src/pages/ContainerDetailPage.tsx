@@ -21,7 +21,7 @@ import {
   useRestartContainer,
 } from '../features/docker'
 import { useCanOperateContainers } from '../features/auth'
-import type { DockerContainerSummary } from '../api/types'
+import type { DockerContainerDetail } from '../api/types'
 
 // =============================================================================
 // Constants
@@ -38,24 +38,23 @@ const AUTO_REFRESH_INTERVAL_LABEL = '3s'
 // Helper Functions
 // =============================================================================
 
-// Extract container name from names array (remove leading /)
-function getContainerName(container: DockerContainerSummary): string {
-  if (container.names.length === 0) return container.id.substring(0, 12)
-  return container.names[0].replace(/^\//, '')
+// Get container name (backend provides name directly)
+function getContainerName(container: DockerContainerDetail): string {
+  return container.name || container.id.substring(0, 12)
 }
 
-// Format Unix timestamp to human readable date
-function formatCreated(timestamp: number): string {
-  const date = new Date(timestamp * 1000)
+// Format ISO timestamp to human readable date
+function formatCreated(timestamp: string): string {
+  const date = new Date(timestamp)
   return date.toLocaleString()
 }
 
-// Format ports for display
-function formatPorts(ports: DockerContainerSummary['ports']): string {
+// Format ports for display (backend uses camelCase field names)
+function formatPorts(ports: DockerContainerDetail['ports']): string {
   if (!ports || ports.length === 0) return 'None'
   return ports
-    .filter((p) => p.public_port)
-    .map((p) => `${p.public_port}:${p.private_port}/${p.type}`)
+    .filter((p) => p.hostPort)
+    .map((p) => `${p.hostPort}:${p.containerPort}/${p.protocol}`)
     .join(', ') || 'None exposed'
 }
 
@@ -180,7 +179,7 @@ function ActionsBar({
   container,
   canOperate,
 }: {
-  container: DockerContainerSummary
+  container: DockerContainerDetail
   canOperate: boolean
 }) {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false)
@@ -639,18 +638,12 @@ export function ContainerDetailPage() {
               <dd className="mt-1 text-sm text-gray-900">{formatCreated(container.created)}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Command</dt>
-              <dd className="mt-1 truncate font-mono text-sm text-gray-900" title={container.command}>
-                {container.command}
-              </dd>
-            </div>
-            <div>
               <dt className="text-sm font-medium text-gray-500">Ports</dt>
               <dd className="mt-1 text-sm text-gray-900">{formatPorts(container.ports)}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Network Mode</dt>
-              <dd className="mt-1 text-sm text-gray-900">{container.host_config.network_mode}</dd>
+              <dt className="text-sm font-medium text-gray-500">Restart Policy</dt>
+              <dd className="mt-1 text-sm text-gray-900">{container.restartPolicy?.name || 'none'}</dd>
             </div>
           </dl>
 
@@ -663,7 +656,7 @@ export function ContainerDetailPage() {
           </div>
 
           {/* Mounts section */}
-          {container.mounts.length > 0 && (
+          {container.mounts && container.mounts.length > 0 && (
             <div className="mt-6 border-t border-gray-200 pt-6">
               <h3 className="text-sm font-medium text-gray-500">Mounts</h3>
               <div className="mt-2 space-y-2">
@@ -676,10 +669,10 @@ export function ContainerDetailPage() {
                       <span className="rounded bg-gray-200 px-1.5 py-0.5 text-xs font-medium text-gray-700">
                         {mount.type}
                       </span>
-                      <span className="text-gray-600">{mount.rw ? 'rw' : 'ro'}</span>
+                      <span className="text-gray-600">{mount.readOnly ? 'ro' : 'rw'}</span>
                     </div>
                     <div className="mt-1 font-mono text-xs text-gray-500">
-                      {mount.source} → {mount.destination}
+                      Target: {mount.target}
                     </div>
                   </div>
                 ))}
@@ -688,20 +681,19 @@ export function ContainerDetailPage() {
           )}
 
           {/* Networks section */}
-          {Object.keys(container.network_settings.networks).length > 0 && (
+          {container.networks && container.networks.length > 0 && (
             <div className="mt-6 border-t border-gray-200 pt-6">
               <h3 className="text-sm font-medium text-gray-500">Networks</h3>
               <div className="mt-2 space-y-2">
-                {Object.entries(container.network_settings.networks).map(([name, network]) => (
+                {container.networks.map((network, index) => (
                   <div
-                    key={name}
+                    key={index}
                     className="rounded-lg bg-gray-50 p-3 text-sm"
                   >
-                    <div className="font-medium text-gray-900">{name}</div>
-                    {network.ip_address && (
+                    <div className="font-medium text-gray-900">{network.name}</div>
+                    {network.ipAddress && (
                       <div className="mt-1 font-mono text-xs text-gray-500">
-                        IP: {network.ip_address}
-                        {network.gateway && ` (Gateway: ${network.gateway})`}
+                        IP: {network.ipAddress}
                       </div>
                     )}
                   </div>

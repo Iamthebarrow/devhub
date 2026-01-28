@@ -79,7 +79,7 @@ describe('VolumesPage', () => {
     expect(localTexts.length).toBeGreaterThan(0)
   })
 
-  it('displays volume size when available', async () => {
+  it('displays volume created date when available', async () => {
     renderWithProviders()
 
     // Wait for volumes to load
@@ -87,11 +87,12 @@ describe('VolumesPage', () => {
       expect(screen.getByText('postgres-data')).toBeInTheDocument()
     })
 
-    // postgres-data has usage_data with size ~500MB
-    expect(screen.getByText(/500/)).toBeInTheDocument()
+    // Check that created date is displayed - looking for "Created" label
+    const createdLabels = screen.getAllByText('Created')
+    expect(createdLabels.length).toBeGreaterThan(0)
   })
 
-  it('displays mount points', async () => {
+  it('does not display mount points for security reasons', async () => {
     renderWithProviders()
 
     // Wait for volumes to load
@@ -99,8 +100,8 @@ describe('VolumesPage', () => {
       expect(screen.getByText('postgres-data')).toBeInTheDocument()
     })
 
-    // Check for mount point text
-    expect(screen.getByText(/\/var\/lib\/docker\/volumes\/postgres-data/)).toBeInTheDocument()
+    // Mount points should NOT be displayed (security)
+    expect(screen.queryByText(/\/var\/lib\/docker\/volumes/)).not.toBeInTheDocument()
   })
 
   it('shows search input', async () => {

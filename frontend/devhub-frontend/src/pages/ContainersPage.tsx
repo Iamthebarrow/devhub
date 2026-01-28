@@ -36,15 +36,14 @@ export function ContainersPage() {
   // Fetch containers
   const { data, isLoading, isError, error, refetch } = useContainers(queryParams)
 
-  // Extract container name from names array (remove leading /)
+  // Get container name (backend now provides name directly)
   const getContainerName = (container: DockerContainerSummary): string => {
-    if (container.names.length === 0) return container.id.substring(0, 12)
-    return container.names[0].replace(/^\//, '')
+    return container.name || container.id.substring(0, 12)
   }
 
-  // Format Unix timestamp to human readable date
-  const formatCreated = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000)
+  // Format ISO timestamp to human readable date
+  const formatCreated = (timestamp: string): string => {
+    const date = new Date(timestamp)
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -57,12 +56,12 @@ export function ContainersPage() {
     return 'Just now'
   }
 
-  // Format ports for display
+  // Format ports for display (backend uses camelCase field names)
   const formatPorts = (ports: DockerContainerSummary['ports']): string => {
     if (!ports || ports.length === 0) return '—'
     return ports
-      .filter((p) => p.public_port)
-      .map((p) => `${p.public_port}:${p.private_port}/${p.type}`)
+      .filter((p) => p.hostPort)
+      .map((p) => `${p.hostPort}:${p.containerPort}/${p.protocol}`)
       .join(', ') || '—'
   }
 

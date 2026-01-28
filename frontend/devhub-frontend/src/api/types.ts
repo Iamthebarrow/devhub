@@ -40,115 +40,85 @@ export interface PagedResult<T> {
 }
 
 // Docker system info from /docker/system/info/
+// Uses camelCase to match backend serializers
 export interface DockerSystemInfo {
   containers: number
-  containers_running: number
-  containers_paused: number
-  containers_stopped: number
+  containersRunning: number
+  containersPaused: number
+  containersStopped: number
   images: number
-  driver: string
-  memory_limit: boolean
-  swap_limit: boolean
-  kernel_memory: boolean
-  cpu_cfs_period: boolean
-  cpu_cfs_quota: boolean
-  cpu_shares: boolean
-  cpu_set: boolean
-  ipv4_forwarding: boolean
-  bridge_nf_iptables: boolean
-  bridge_nf_ip6tables: boolean
-  oom_kill_disable: boolean
-  logging_driver: string
-  cgroup_driver: string
-  n_events_listener: number
-  kernel_version: string
-  operating_system: string
-  os_type: string
-  architecture: string
-  ncpu: number
-  mem_total: number
-  docker_root_dir: string
   name: string
-  labels: string[]
-  experimental_build: boolean
-  server_version: string
+  operatingSystem?: string
+  osType?: string
+  architecture?: string
+  ncpu?: number
+  memTotal?: number
+  serverVersion?: string
+  id?: string
 }
 
 // Docker version info from /docker/system/version/
+// Uses camelCase to match backend serializers
 export interface DockerSystemVersion {
-  platform: {
-    name: string
-  }
-  components: Array<{
-    name: string
-    version: string
-    details?: Record<string, string>
-  }>
-  version: string
-  api_version: string
-  min_api_version: string
-  git_commit: string
-  go_version: string
-  os: string
-  arch: string
-  kernel_version: string
-  build_time: string
+  version?: string
+  apiVersion?: string
+  gitCommit?: string
+  goVersion?: string
+  os?: string
+  arch?: string
 }
 
-// Container port mapping
+// Container port mapping - matches backend ContainerPortSerializer
 export interface ContainerPort {
-  ip?: string
-  private_port: number
-  public_port?: number
-  type: string
+  containerPort: number
+  hostPort?: number | null
+  hostIp?: string
+  protocol: string
 }
 
-// Container summary from /docker/containers/
+// Container summary from /docker/containers/ - matches backend ContainerSummarySerializer
 export interface DockerContainerSummary {
   id: string
-  names: string[]
+  name: string
   image: string
-  image_id: string
-  command: string
-  created: number // Unix timestamp
-  ports: ContainerPort[]
-  labels: Record<string, string>
   state: string
   status: string
-  host_config: {
-    network_mode: string
-  }
-  network_settings: {
-    networks: Record<
-      string,
-      {
-        network_id: string
-        endpoint_id: string
-        gateway: string
-        ip_address: string
-        ip_prefix_len: number
-        mac_address: string
-      }
-    >
-  }
-  mounts: Array<{
-    type: string
-    name?: string
-    source: string
-    destination: string
-    driver?: string
-    mode: string
-    rw: boolean
-  }>
+  created: string
+  ports: ContainerPort[]
+  labels: Record<string, string>
 }
 
 // =============================================================================
 // Container Detail Types (Phase 4)
 // =============================================================================
 
+// Container mount - matches backend ContainerMountSerializer
+export interface ContainerMount {
+  target: string
+  type: string
+  readOnly: boolean
+}
+
+// Container network - matches backend ContainerNetworkSerializer
+export interface ContainerNetwork {
+  name: string
+  ipAddress: string
+}
+
+// Restart policy - matches backend RestartPolicySerializer
+export interface RestartPolicy {
+  name: string
+  maximumRetryCount: number
+}
+
 // Full container detail from /docker/containers/{id}/
-// This is the same as DockerContainerSummary but aliased for clarity
-export type DockerContainerDetail = DockerContainerSummary
+// Extends summary with additional fields - matches backend ContainerDetailSerializer
+export interface DockerContainerDetail extends DockerContainerSummary {
+  fullId: string
+  mounts: ContainerMount[]
+  networks: ContainerNetwork[]
+  restartPolicy: RestartPolicy
+}
 
 // Container logs response
 // DEFAULT DECISION: Backend returns { logs: string }
@@ -184,18 +154,15 @@ export interface Container {
 
 /**
  * Docker image summary from /docker/images/
+ * Matches backend ImageSummarySerializer
  */
 export interface DockerImageSummary {
   id: string
-  repo_tags: string[]
-  repo_digests: string[]
-  parent_id: string
+  fullId: string
+  tags: string[]
   size: number
-  virtual_size: number
-  shared_size: number
-  labels: Record<string, string> | null
-  containers: number
-  created: number // Unix timestamp
+  created: string
+  labels?: Record<string, string>
 }
 
 /**
@@ -221,28 +188,23 @@ export interface QueuedTaskResponse {
 
 /**
  * Docker volume from /docker/volumes/
+ * Matches backend VolumeSummarySerializer
+ * Note: mountpoint is not exposed for security reasons
  */
 export interface DockerVolume {
   name: string
   driver: string
-  mountpoint: string
-  created_at: string
-  status?: Record<string, string>
-  labels: Record<string, string> | null
   scope: string
-  options: Record<string, string> | null
-  usage_data?: {
-    size: number
-    ref_count: number
-  }
+  created?: string
+  labels?: Record<string, string>
 }
 
 /**
- * Volumes list response
+ * Volumes list response - matches backend VolumeListResponseSerializer
  */
 export interface VolumesListResponse {
-  volumes: DockerVolume[]
-  warnings?: string[]
+  results: DockerVolume[]
+  count: number
 }
 
 // =============================================================================
@@ -251,37 +213,16 @@ export interface VolumesListResponse {
 
 /**
  * Docker network from /docker/networks/
+ * Matches backend NetworkSummarySerializer
  */
 export interface DockerNetwork {
   id: string
   name: string
   driver: string
   scope: string
-  created: string
   internal: boolean
-  attachable: boolean
-  ingress: boolean
-  ipam: {
-    driver: string
-    config: Array<{
-      subnet?: string
-      gateway?: string
-      ip_range?: string
-    }>
-  }
-  enable_ipv6: boolean
-  containers: Record<
-    string,
-    {
-      name: string
-      endpoint_id: string
-      mac_address: string
-      ipv4_address: string
-      ipv6_address: string
-    }
-  >
-  options: Record<string, string>
-  labels: Record<string, string>
+  subnets?: string[]
+  labels?: Record<string, string>
 }
 
 // =============================================================================

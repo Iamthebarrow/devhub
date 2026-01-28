@@ -22,18 +22,8 @@ function formatDate(isoDate: string): string {
 }
 
 /**
- * Format bytes to human-readable size.
- */
-function formatSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-}
-
-/**
  * Volume card component.
+ * Note: mountpoint and usage_data are not exposed by backend for security reasons.
  */
 function VolumeCard({ volume }: { volume: DockerVolume }) {
   return (
@@ -51,26 +41,14 @@ function VolumeCard({ volume }: { volume: DockerVolume }) {
           <dt className="text-gray-500">Driver</dt>
           <dd className="font-medium text-gray-900">{volume.driver}</dd>
         </div>
-        {volume.mountpoint && (
-          <div>
-            <dt className="text-gray-500">Mount Point</dt>
-            <dd className="truncate font-mono text-xs text-gray-600" title={volume.mountpoint}>
-              {volume.mountpoint}
-            </dd>
-          </div>
-        )}
         <div>
           <dt className="text-gray-500">Scope</dt>
           <dd className="font-medium text-gray-900">{volume.scope}</dd>
         </div>
-        <div>
-          <dt className="text-gray-500">Created</dt>
-          <dd className="font-medium text-gray-900">{formatDate(volume.created_at)}</dd>
-        </div>
-        {volume.usage_data && (
+        {volume.created && (
           <div>
-            <dt className="text-gray-500">Size</dt>
-            <dd className="font-medium text-gray-900">{formatSize(volume.usage_data.size)}</dd>
+            <dt className="text-gray-500">Created</dt>
+            <dd className="font-medium text-gray-900">{formatDate(volume.created)}</dd>
           </div>
         )}
       </dl>
@@ -88,7 +66,7 @@ export function VolumesPage() {
 
   const { data, isLoading, isError, error, refetch } = useVolumes()
 
-  const volumes = data?.volumes ?? []
+  const volumes = data?.results ?? []
 
   // Filter volumes by search query
   const filteredVolumes = volumes.filter((volume) => {
