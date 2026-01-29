@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: always
     environment:
       POSTGRES_DB: devhub
       POSTGRES_USER: devhub
@@ -15,6 +16,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: always
     volumes:
       - redis_data:/data
     healthcheck:
@@ -25,6 +27,7 @@ services:
 
   docker-socket-proxy:
     image: tecnativa/docker-socket-proxy:latest
+    restart: always
     environment:
       CONTAINERS: 1
       IMAGES: 1
@@ -54,6 +57,7 @@ services:
     build:
       context: ./backend/devhub-backend
       dockerfile: Dockerfile
+    restart: always
     ports:
       - "8000:8000"
     volumes:
@@ -84,6 +88,7 @@ services:
     build:
       context: ./backend/devhub-backend
       dockerfile: Dockerfile
+    restart: always
     volumes:
       - ./backend/devhub-backend:/app
     env_file:
@@ -103,6 +108,7 @@ services:
     build:
       context: ./frontend/devhub-frontend
       dockerfile: Dockerfile
+    restart: always
     ports:
       - "5173:5173"
     volumes:
