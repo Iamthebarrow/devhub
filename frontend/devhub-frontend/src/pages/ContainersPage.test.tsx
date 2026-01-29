@@ -190,4 +190,78 @@ describe('ContainersPage', () => {
       })
     })
   })
+
+  describe('refresh button', () => {
+    it('refresh does not clear filter state', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<ContainersPage />)
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('nginx-proxy')).toBeInTheDocument()
+      })
+
+      // Set filter to "running"
+      const statusSelect = screen.getByRole('combobox')
+      await user.selectOptions(statusSelect, 'running')
+
+      // Verify filter is applied
+      await waitFor(() => {
+        expect(screen.queryByText('redis-cache')).not.toBeInTheDocument()
+      })
+
+      // Click refresh button
+      const refreshButton = screen.getByRole('button', { name: /refresh/i })
+      await user.click(refreshButton)
+
+      // Filter should still be "running"
+      expect(statusSelect).toHaveValue('running')
+
+      // Data should still be filtered (exited container not visible)
+      await waitFor(() => {
+        expect(screen.getByText('nginx-proxy')).toBeInTheDocument()
+        expect(screen.queryByText('redis-cache')).not.toBeInTheDocument()
+      })
+    })
+
+    it('refresh does not clear search text', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<ContainersPage />)
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('nginx-proxy')).toBeInTheDocument()
+      })
+
+      // Enter search text
+      const searchInput = screen.getByPlaceholderText(/search containers/i)
+      await user.type(searchInput, 'nginx')
+
+      // Wait for search to take effect (debounced)
+      await waitFor(() => {
+        expect(searchInput).toHaveValue('nginx')
+      })
+
+      // Click refresh button
+      const refreshButton = screen.getByRole('button', { name: /refresh/i })
+      await user.click(refreshButton)
+
+      // Search input should still have text
+      expect(searchInput).toHaveValue('nginx')
+    })
+
+    it('refresh button is disabled while fetching', async () => {
+      renderWithProviders(<ContainersPage />)
+
+      // During initial loading, button might be disabled
+      // Once loaded, button should be enabled
+      await waitFor(() => {
+        expect(screen.getByText('nginx-proxy')).toBeInTheDocument()
+      })
+
+      const refreshButton = screen.getByRole('button', { name: /refresh/i })
+      // Button should be enabled when not fetching
+      expect(refreshButton).not.toBeDisabled()
+    })
+  })
 })

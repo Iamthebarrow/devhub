@@ -226,24 +226,33 @@ export interface DockerNetwork {
 }
 
 // =============================================================================
-// Audit Types (Phase 5)
+// Audit Types (Phase 2 — Industry-standard MVP)
 // =============================================================================
 
 /**
  * Audit event from /api/v1/audit/events/
+ * Matches backend AuditEvent model (UUID PK, FK actor, JSONField metadata).
+ * Actor is handled defensively: could be { id, username }, a string, or null.
  */
 export interface AuditEvent {
-  id: number
-  timestamp: string
-  actor: string
+  id: string
+  created_at: string
+  actor: { id: number; username: string } | string | null
+  ip_address: string | null
+  user_agent: string | null
   action: string
-  resource: string
-  status: 'success' | 'failed'
-  details?: Record<string, unknown>
+  resource_type: string
+  resource_id: string
+  resource_name: string | null
+  request_id: string | null
+  status: 'success' | 'error'
+  error_message: string | null
+  metadata: Record<string, unknown> | null
 }
 
 /**
- * Audit events list params
+ * Audit events list params.
+ * All optional; sent as query string to GET /audit/events/.
  */
 export interface AuditEventsParams {
   action?: string
@@ -251,10 +260,14 @@ export interface AuditEventsParams {
   actor?: string
   from?: string
   to?: string
+  search?: string
+  page?: number
+  page_size?: number
 }
 
 /**
- * Audit events list response
+ * Audit events paginated response.
+ * Re-uses the same { results, count } shape as other endpoints.
  */
 export interface AuditEventsResponse {
   results: AuditEvent[]

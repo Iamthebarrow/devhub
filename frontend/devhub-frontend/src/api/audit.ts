@@ -1,11 +1,11 @@
 /**
- * Audit API module (Phase 5).
+ * Audit API module (Phase 2 — Industry-standard MVP).
  *
- * DEFAULT DECISION: Assumes endpoint exists at /api/v1/audit/events/
- * If backend returns 404, the UI will show a friendly "Audit coming soon" message.
+ * DEFAULT DECISION: Endpoint is GET /api/v1/audit/events/
+ * If backend returns 404, the UI shows a friendly "Audit not available" message.
  */
 
-import { apiClient } from './client'
+import { apiClient, ApiRequestError } from './client'
 import { AuditEventsResponseSchema } from './zod'
 import type { AuditEventsParams, AuditEventsResponse } from './types'
 
@@ -30,32 +30,26 @@ export class AuditApiError extends Error {
 // =============================================================================
 
 /**
- * List audit events.
- * GET /api/v1/audit/events/?action=&status=&actor=&from=&to=
+ * List audit events with pagination and filters.
+ * GET /api/v1/audit/events/?action=&status=&actor=&from=&to=&search=&page=&page_size=
  *
- * DEFAULT DECISION: If endpoint 404s, caller should handle gracefully.
+ * Throws AuditApiError on validation failure.
+ * Throws ApiRequestError on HTTP errors (including 404).
+ * Caller should check error.status === 404 to show "not available" UI.
  */
 export async function listAuditEvents(params?: AuditEventsParams): Promise<AuditEventsResponse> {
   const searchParams = new URLSearchParams()
 
-  if (params?.action) {
-    searchParams.set('action', params.action)
-  }
-  if (params?.status) {
-    searchParams.set('status', params.status)
-  }
-  if (params?.actor) {
-    searchParams.set('actor', params.actor)
-  }
-  if (params?.from) {
-    searchParams.set('from', params.from)
-  }
-  if (params?.to) {
-    searchParams.set('to', params.to)
-  }
+  if (params?.action) searchParams.set('action', params.action)
+  if (params?.status) searchParams.set('status', params.status)
+  if (params?.actor) searchParams.set('actor', params.actor)
+  if (params?.from) searchParams.set('from', params.from)
+  if (params?.to) searchParams.set('to', params.to)
+  if (params?.search) searchParams.set('search', params.search)
+  if (params?.page) searchParams.set('page', String(params.page))
+  if (params?.page_size) searchParams.set('page_size', String(params.page_size))
 
   const queryString = searchParams.toString()
-  // Note: Using different base path since audit is not under /docker/
   const endpoint = `/audit/events/${queryString ? `?${queryString}` : ''}`
 
   const data = await apiClient.get<unknown>(endpoint)

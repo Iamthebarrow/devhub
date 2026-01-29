@@ -1,1 +1,1 @@
-export { useAuditEvents, auditKeys } from './hooks'
+export { useAuditEvents, auditKeys, isAudit404 } from './hooks'

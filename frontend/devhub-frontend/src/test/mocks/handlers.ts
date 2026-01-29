@@ -515,7 +515,7 @@ export const handlers = [
   // Audit API (Phase 5)
   // ==========================================================================
 
-  // Audit events list
+  // Audit events list (Phase 2 — supports pagination & filters)
   http.get(`${API_BASE_URL}/audit/events/`, ({ request }) => {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -525,9 +525,43 @@ export const handlers = [
       )
     }
 
+    const url = new URL(request.url)
+    const statusFilter = url.searchParams.get('status')
+    const actionFilter = url.searchParams.get('action')
+    const searchFilter = url.searchParams.get('search')
+    const page = parseInt(url.searchParams.get('page') || '1', 10)
+    const pageSize = parseInt(url.searchParams.get('page_size') || '25', 10)
+
+    let filtered = [...mockAuditEvents]
+
+    if (statusFilter) {
+      filtered = filtered.filter((e) => e.status === statusFilter)
+    }
+    if (actionFilter) {
+      filtered = filtered.filter((e) =>
+        e.action.toLowerCase().includes(actionFilter.toLowerCase())
+      )
+    }
+    if (searchFilter) {
+      const s = searchFilter.toLowerCase()
+      filtered = filtered.filter(
+        (e) =>
+          e.action.toLowerCase().includes(s) ||
+          (e.resource_name ?? '').toLowerCase().includes(s) ||
+          e.resource_type.toLowerCase().includes(s) ||
+          (typeof e.actor === 'object' && e.actor !== null
+            ? e.actor.username.toLowerCase().includes(s)
+            : String(e.actor ?? '').toLowerCase().includes(s))
+      )
+    }
+
+    const total = filtered.length
+    const start = (page - 1) * pageSize
+    const paged = filtered.slice(start, start + pageSize)
+
     return HttpResponse.json({
-      results: mockAuditEvents,
-      count: mockAuditEvents.length,
+      results: paged,
+      count: total,
     })
   }),
 ]
@@ -617,45 +651,81 @@ export const mockNetworks = [
   },
 ]
 
+// Mock audit events — matches backend AuditEvent model (Phase 2)
 export const mockAuditEvents = [
   {
-    id: 1,
-    timestamp: '2024-01-20T14:32:15Z',
-    actor: 'admin',
+    id: 'a1b2c3d4-0001-4000-8000-000000000001',
+    created_at: '2024-01-20T14:32:15Z',
+    actor: { id: 1, username: 'admin' },
+    ip_address: '192.168.1.10',
+    user_agent: 'Mozilla/5.0',
     action: 'container.start',
-    resource: 'nginx-proxy',
+    resource_type: 'container',
+    resource_id: 'abc123def456',
+    resource_name: 'nginx-proxy',
+    request_id: 'req-aaa-111',
     status: 'success' as const,
+    error_message: null,
+    metadata: { image: 'nginx:latest' },
   },
   {
-    id: 2,
-    timestamp: '2024-01-20T14:30:00Z',
-    actor: 'operator1',
+    id: 'a1b2c3d4-0002-4000-8000-000000000002',
+    created_at: '2024-01-20T14:30:00Z',
+    actor: { id: 2, username: 'operator1' },
+    ip_address: '10.0.0.5',
+    user_agent: 'Mozilla/5.0',
     action: 'container.stop',
-    resource: 'redis-cache',
+    resource_type: 'container',
+    resource_id: 'ghi789jkl012',
+    resource_name: 'redis-cache',
+    request_id: 'req-bbb-222',
     status: 'success' as const,
+    error_message: null,
+    metadata: null,
   },
   {
-    id: 3,
-    timestamp: '2024-01-20T14:25:30Z',
-    actor: 'admin',
+    id: 'a1b2c3d4-0003-4000-8000-000000000003',
+    created_at: '2024-01-20T14:25:30Z',
+    actor: { id: 1, username: 'admin' },
+    ip_address: '192.168.1.10',
+    user_agent: 'Mozilla/5.0',
     action: 'image.pull',
-    resource: 'nginx:latest',
+    resource_type: 'image',
+    resource_id: 'sha256:abc123def456',
+    resource_name: 'nginx:latest',
+    request_id: 'req-ccc-333',
     status: 'success' as const,
+    error_message: null,
+    metadata: { tag: 'latest' },
   },
   {
-    id: 4,
-    timestamp: '2024-01-20T14:20:00Z',
-    actor: 'viewer1',
-    action: 'container.view',
-    resource: 'postgres-db',
+    id: 'a1b2c3d4-0004-4000-8000-000000000004',
+    created_at: '2024-01-20T14:20:00Z',
+    actor: { id: 3, username: 'viewer1' },
+    ip_address: '10.0.0.15',
+    user_agent: 'curl/8.0',
+    action: 'auth.login',
+    resource_type: 'auth',
+    resource_id: '',
+    resource_name: null,
+    request_id: 'req-ddd-444',
     status: 'success' as const,
+    error_message: null,
+    metadata: null,
   },
   {
-    id: 5,
-    timestamp: '2024-01-20T14:15:00Z',
-    actor: 'operator1',
+    id: 'a1b2c3d4-0005-4000-8000-000000000005',
+    created_at: '2024-01-20T14:15:00Z',
+    actor: { id: 2, username: 'operator1' },
+    ip_address: '10.0.0.5',
+    user_agent: 'Mozilla/5.0',
     action: 'container.restart',
-    resource: 'node-api',
-    status: 'failed' as const,
+    resource_type: 'container',
+    resource_id: 'xyz789abc123',
+    resource_name: 'node-api',
+    request_id: 'req-eee-555',
+    status: 'error' as const,
+    error_message: 'Container not running',
+    metadata: { attempted_action: 'restart', container_state: 'exited' },
   },
 ]
