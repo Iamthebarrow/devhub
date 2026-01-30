@@ -333,36 +333,21 @@ async function copyToClipboard(text: string): Promise<boolean> {
  * Logs panel with tail selector and auto-refresh toggle.
  * Phase 1: Fixed Copy button with fallback to container name + id.
  */
-/** Ref type for exposing logs state to parent */
-interface LogsRefHandle {
-  refetch: () => void
-  isFetching: boolean
-}
-
 function LogsPanel({
   containerId,
   containerName,
-  logsRef,
 }: {
   containerId: string
   containerName: string
-  logsRef?: React.MutableRefObject<LogsRefHandle | null>
 }) {
   const [tail, setTail] = useState<number>(DEFAULT_TAIL)
   const [autoRefresh, setAutoRefresh] = useState(false)
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useContainerLogs(
+  const { data, isLoading, isError, error, refetch } = useContainerLogs(
     containerId,
     { tail },
     { autoRefresh }
   )
-
-  // Expose refetch and isFetching to parent for page-level refresh
-  useEffect(() => {
-    if (logsRef) {
-      logsRef.current = { refetch, isFetching }
-    }
-  }, [logsRef, refetch, isFetching])
 
   // Copy logs to clipboard with fallback
   // DEFAULT: Copy logs if available, otherwise copy container name + id
@@ -547,30 +532,7 @@ export function ContainerDetailPage() {
   const { id } = useParams<{ id: string }>()
   const canOperate = useCanOperateContainers()
 
-  // Ref to access logs panel refetch/isFetching state
-  const logsRef = useRef<LogsRefHandle | null>(null)
-  const [isPageRefreshing, setIsPageRefreshing] = useState(false)
-
-  const { data: container, isLoading, isError, error, refetch, isFetching: isDetailFetching } = useContainer(id ?? '')
-
-  // Page-level refresh that refetches both detail and logs
-  const handlePageRefresh = async () => {
-    setIsPageRefreshing(true)
-    try {
-      // Refetch both in parallel
-      const promises: Promise<unknown>[] = [refetch()]
-      if (logsRef.current) {
-        promises.push(Promise.resolve(logsRef.current.refetch()))
-      }
-      await Promise.all(promises)
-      toast.success('Refreshed')
-    } finally {
-      setIsPageRefreshing(false)
-    }
-  }
-
-  // Combined loading state for page refresh button
-  const isRefreshing = isPageRefreshing || isDetailFetching || (logsRef.current?.isFetching ?? false)
+  const { data: container, isLoading, isError, error, refetch } = useContainer(id ?? '')
 
   // Shorten the container ID for display (first 12 chars like Docker CLI)
   const shortId = id ? id.substring(0, 12) : 'unknown'
@@ -690,25 +652,8 @@ export function ContainerDetailPage() {
             Back to Containers
           </Link>
 
-          <div className="flex items-center gap-3">
-            {/* Page-level Refresh button */}
-            <button
-              onClick={handlePageRefresh}
-              disabled={isRefreshing}
-              className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-              title="Refresh container details and logs"
-              aria-label={isRefreshing ? 'Refreshing...' : 'Refresh'}
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
-                aria-hidden="true"
-              />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-
-            {/* Actions bar - only visible to operators/admins */}
-            <ActionsBar container={container} canOperate={canOperate} />
-          </div>
+          {/* Actions bar - only visible to operators/admins */}
+          <ActionsBar container={container} canOperate={canOperate} />
         </div>
 
         {/* Container details card */}
@@ -809,7 +754,6 @@ export function ContainerDetailPage() {
           <LogsPanel
             containerId={id}
             containerName={containerName}
-            logsRef={logsRef}
           />
         )}
       </div>

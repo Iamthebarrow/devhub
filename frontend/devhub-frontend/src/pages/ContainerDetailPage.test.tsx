@@ -394,45 +394,4 @@ describe('ContainerDetailPage', () => {
     })
   })
 
-  describe('Page-level Refresh button', () => {
-    beforeEach(() => {
-      useAuthStore.setState({
-        status: 'authenticated',
-        accessToken: 'test-token',
-        user: { id: 1, username: 'testuser', roles: ['admin'] },
-      })
-    })
-
-    it('renders a page-level Refresh button with correct title', async () => {
-      renderWithProviders(runningContainer.id)
-
-      await waitFor(() => {
-        expect(screen.getAllByText('nginx-proxy').length).toBeGreaterThan(0)
-      })
-
-      // Should have a Refresh button in the header area with the specific title
-      const pageRefreshButton = screen.getByTitle('Refresh container details and logs')
-      expect(pageRefreshButton).toBeInTheDocument()
-      expect(pageRefreshButton).toHaveAttribute('aria-label')
-    })
-
-    it('page refresh button triggers refetch', async () => {
-      const user = userEvent.setup()
-      renderWithProviders(runningContainer.id)
-
-      await waitFor(() => {
-        expect(screen.getAllByText('nginx-proxy').length).toBeGreaterThan(0)
-      })
-
-      // Find the page-level Refresh button by title
-      const pageRefreshButton = screen.getByTitle('Refresh container details and logs')
-      await user.click(pageRefreshButton)
-
-      // The button should trigger a refetch - verify by checking that toast was shown
-      // (the success toast 'Refreshed' is shown after both refetches complete)
-      await waitFor(() => {
-        expect(mockToastSuccess).toHaveBeenCalledWith('Refreshed')
-      })
-    })
-  })
 })
