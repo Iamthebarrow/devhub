@@ -529,6 +529,8 @@ export const handlers = [
     const statusFilter = url.searchParams.get('status')
     const actionFilter = url.searchParams.get('action')
     const searchFilter = url.searchParams.get('search')
+    const fromFilter = url.searchParams.get('from')
+    const toFilter = url.searchParams.get('to')
     const page = parseInt(url.searchParams.get('page') || '1', 10)
     const pageSize = parseInt(url.searchParams.get('page_size') || '25', 10)
 
@@ -553,6 +555,14 @@ export const handlers = [
             ? e.actor.username.toLowerCase().includes(s)
             : String(e.actor ?? '').toLowerCase().includes(s))
       )
+    }
+    if (fromFilter) {
+      const from = new Date(fromFilter)
+      filtered = filtered.filter((e) => new Date(e.created_at) >= from)
+    }
+    if (toFilter) {
+      const to = new Date(toFilter + 'T23:59:59.999Z')
+      filtered = filtered.filter((e) => new Date(e.created_at) <= to)
     }
 
     const total = filtered.length

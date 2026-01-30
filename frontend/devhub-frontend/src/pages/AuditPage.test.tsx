@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { AuditPage } from './AuditPage'
 import { useAuthStore } from '../features/auth'
+import { useAuditFilterStore } from '../features/audit'
 import { server } from '../test/mocks/server'
 import { API_BASE_URL } from '../api/client'
 
@@ -33,7 +34,19 @@ Object.assign(navigator, {
   clipboard: { writeText: mockWriteText },
 })
 
-// Helper to render with required providers
+// Mock URL.createObjectURL / revokeObjectURL for CSV export tests
+const mockCreateObjectURL = vi.fn().mockReturnValue('blob:mock-url')
+const mockRevokeObjectURL = vi.fn()
+URL.createObjectURL = mockCreateObjectURL as unknown as typeof URL.createObjectURL
+URL.revokeObjectURL = mockRevokeObjectURL as unknown as typeof URL.revokeObjectURL
+
+// Helper to inspect current URL in tests
+function LocationDisplay() {
+  const location = useLocation()
+  return <div data-testid="location-search">{location.search}</div>
+}
+
+// Helper to render with required providers (MemoryRouter for URL param isolation)
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -44,11 +57,14 @@ const createTestQueryClient = () =>
     },
   })
 
-const renderWithProviders = (ui: React.ReactNode) => {
+const renderWithProviders = (ui: React.ReactNode, { initialEntries = ['/audit'] } = {}) => {
   const queryClient = createTestQueryClient()
   return render(
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>{ui}</BrowserRouter>
+      <MemoryRouter initialEntries={initialEntries}>
+        {ui}
+        <LocationDisplay />
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }
@@ -56,7 +72,21 @@ const renderWithProviders = (ui: React.ReactNode) => {
 describe('AuditPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset the Zustand filter store between tests
+    useAuditFilterStore.setState({
+      status: '',
+      action: '',
+      search: '',
+      from: '',
+      to: '',
+      page: 1,
+      visibleColumns: ['time', 'status', 'action', 'resource', 'actor', 'requestId'],
+    })
   })
+
+  // ===========================================================================
+  // Phase 2 Tests (preserved)
+  // ===========================================================================
 
   describe('with admin role', () => {
     beforeEach(() => {
@@ -108,8 +138,8 @@ describe('AuditPage', () => {
     it('renders date range inputs', () => {
       renderWithProviders(<AuditPage />)
 
-      expect(screen.getByLabelText(/from/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/to/i)).toBeInTheDocument()
+      expect(screen.getByLabelText('From')).toBeInTheDocument()
+      expect(screen.getByLabelText('To')).toBeInTheDocument()
     })
 
     it('renders refresh button', async () => {
@@ -373,6 +403,319 @@ describe('AuditPage', () => {
       await waitFor(() => {
         expect(mockToastSuccess).toHaveBeenCalled()
       })
+    })
+  })
+
+  // ===========================================================================
+  // Phase 3 Tests
+  // ===========================================================================
+
+  describe('Phase 3 — quick filter chips', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'admin', roles: ['admin'] },
+      })
+    })
+
+    it('renders quick filter chips', () => {
+      renderWithProviders(<AuditPage />)
+
+      expect(screen.getByText('Errors only')).toBeInTheDocument()
+      expect(screen.getByText('Last 24h')).toBeInTheDocument()
+      expect(screen.getByText('Last 7 days')).toBeInTheDocument()
+      expect(screen.getByText('Containers')).toBeInTheDocument()
+      expect(screen.getByText('Auth events')).toBeInTheDocument()
+    })
+
+    it('clicking "Errors only" chip activates it and filters events', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      const chip = screen.getByText('Errors only')
+      await user.click(chip)
+
+      // Should filter to error events only
+      await waitFor(() => {
+        expect(screen.getByText('container.restart')).toBeInTheDocument()
+      })
+      expect(screen.queryByText('container.start')).not.toBeInTheDocument()
+
+      // Chip should be active (aria-pressed)
+      expect(chip).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('clicking active chip deactivates it', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      const chip = screen.getByText('Errors only')
+
+      // Activate
+      await user.click(chip)
+      await waitFor(() => {
+        expect(chip).toHaveAttribute('aria-pressed', 'true')
+      })
+
+      // Deactivate
+      await user.click(chip)
+      await waitFor(() => {
+        expect(chip).toHaveAttribute('aria-pressed', 'false')
+      })
+
+      // All events should be visible again
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Phase 3 — URL query string sync', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'admin', roles: ['admin'] },
+      })
+    })
+
+    it('setting status filter updates URL', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      const statusSelect = screen.getByLabelText(/status filter/i)
+      await user.selectOptions(statusSelect, 'error')
+
+      // URL should now include status=error
+      await waitFor(() => {
+        expect(screen.getByTestId('location-search')).toHaveTextContent('status=error')
+      })
+    })
+
+    it('loading page with URL params applies filters', async () => {
+      renderWithProviders(<AuditPage />, {
+        initialEntries: ['/audit?status=error'],
+      })
+
+      // Should only show error events
+      await waitFor(() => {
+        expect(screen.getByText('container.restart')).toBeInTheDocument()
+      })
+
+      // Success events should not appear
+      expect(screen.queryByText('container.start')).not.toBeInTheDocument()
+
+      // Status select should reflect URL value
+      const statusSelect = screen.getByLabelText(/status filter/i) as HTMLSelectElement
+      expect(statusSelect.value).toBe('error')
+    })
+  })
+
+  describe('Phase 3 — export CSV', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'admin', roles: ['admin'] },
+      })
+    })
+
+    it('renders Export CSV button when events exist', async () => {
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      expect(screen.getByRole('button', { name: /export csv/i })).toBeInTheDocument()
+    })
+
+    it('export CSV produces blob with correct header row', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      const exportBtn = screen.getByRole('button', { name: /export csv/i })
+      await user.click(exportBtn)
+
+      expect(mockCreateObjectURL).toHaveBeenCalledTimes(1)
+      const blob = mockCreateObjectURL.mock.calls[0][0] as Blob
+      // jsdom's Blob doesn't support .text() — use FileReader instead
+      const text = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsText(blob)
+      })
+
+      // Check header row
+      expect(text.startsWith('created_at,status,action,resource_type,resource_id,resource_name,actor,request_id')).toBe(true)
+
+      // Check it contains event data
+      expect(text).toContain('container.start')
+      expect(text).toContain('admin')
+      expect(text).toContain('success')
+    })
+
+    it('hides Export CSV button on 404', async () => {
+      server.use(
+        http.get(`${API_BASE_URL}/audit/events/`, () => {
+          return HttpResponse.json(
+            { error: { code: 'NOT_FOUND', message: 'Not Found' } },
+            { status: 404 }
+          )
+        })
+      )
+
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/audit is not available/i)).toBeInTheDocument()
+        },
+        { timeout: 3000 }
+      )
+
+      expect(screen.queryByRole('button', { name: /export csv/i })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Phase 3 — deep-link to event', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'admin', roles: ['admin'] },
+      })
+    })
+
+    it('opens drawer when ?event= matches an event in the list', async () => {
+      renderWithProviders(<AuditPage />, {
+        initialEntries: ['/audit?event=a1b2c3d4-0001-4000-8000-000000000001'],
+      })
+
+      // Wait for data to load
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      // Drawer should auto-open with event details
+      await waitFor(() => {
+        expect(screen.getByText('Event Details')).toBeInTheDocument()
+      })
+    })
+
+    it('shows "Event not on this page" when ?event= does not match', async () => {
+      renderWithProviders(<AuditPage />, {
+        initialEntries: ['/audit?event=nonexistent-id-000'],
+      })
+
+      // Wait for data to load
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      // Should show hint message
+      await waitFor(() => {
+        expect(screen.getByText(/event not on this page/i)).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Phase 3 — column toggles', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'admin', roles: ['admin'] },
+      })
+    })
+
+    it('renders Columns toggle button', async () => {
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      expect(screen.getByRole('button', { name: /toggle columns/i })).toBeInTheDocument()
+    })
+
+    it('shows column toggle menu on click', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('button', { name: /toggle columns/i }))
+
+      // Should show toggleable columns in the menu (Request ID also appears in table header)
+      const menuLabels = screen.getAllByText('Request ID')
+      expect(menuLabels.length).toBeGreaterThanOrEqual(2) // table header + menu
+      expect(screen.getByText('IP Address')).toBeInTheDocument()
+      expect(screen.getByText('User Agent')).toBeInTheDocument()
+    })
+  })
+
+  describe('Phase 3 — error-first highlighting', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'admin', roles: ['admin'] },
+      })
+    })
+
+    it('error rows have red left border styling', async () => {
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      // Find the error event row (container.restart has status=error)
+      const errorAction = screen.getByText('container.restart')
+      const errorRow = errorAction.closest('tr')
+      expect(errorRow).toHaveClass('border-l-4')
+      expect(errorRow).toHaveClass('border-l-red-400')
+    })
+  })
+
+  describe('Phase 3 — resource ID copy', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'admin', roles: ['admin'] },
+      })
+    })
+
+    it('renders copy resource ID buttons', async () => {
+      renderWithProviders(<AuditPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('container.start')).toBeInTheDocument()
+      })
+
+      const copyResourceButtons = screen.getAllByTitle('Copy resource ID')
+      expect(copyResourceButtons.length).toBeGreaterThan(0)
     })
   })
 })
