@@ -228,6 +228,7 @@ Use JWT Bearer tokens in the `Authorization` header.
         {"name": "docker-images", "description": "Image management"},
         {"name": "docker-volumes", "description": "Volume listing"},
         {"name": "docker-networks", "description": "Network listing"},
+        {"name": "audit", "description": "Audit event log"},
     ],
     # Schema generation settings
     "COMPONENT_SPLIT_REQUEST": True,
