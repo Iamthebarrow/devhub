@@ -59,7 +59,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "8000:8000"
+      - "8888:8888"
     volumes:
       - ./backend/devhub-backend:/app
     env_file:
@@ -78,7 +78,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "python -c \"import urllib.request; import sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/v1/health/').status == 200 else 1)\"",
+          "python -c \"import urllib.request; import sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8888/api/v1/health/').status == 200 else 1)\"",
         ]
       interval: 10s
       timeout: 5s
@@ -110,7 +110,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "5173:5173"
+      - "3100:3100"
     volumes:
       - ./frontend/devhub-frontend:/app
       - /app/node_modules
