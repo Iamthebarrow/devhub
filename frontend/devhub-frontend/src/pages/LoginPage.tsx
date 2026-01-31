@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Box, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { login, me } from '../api/auth'
 import { useAuthStore } from '../features/auth'
 
@@ -55,7 +55,7 @@ export function LoginPage() {
         {/* Logo/Title */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-blue-600">
-            <Box className="h-8 w-8 text-white" />
+            <img src="/vite.svg" alt="DevHub Logo" className="h-8 w-8text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">DevHub</h1>
           <p className="mt-2 text-gray-600">Docker Management Dashboard</p>
