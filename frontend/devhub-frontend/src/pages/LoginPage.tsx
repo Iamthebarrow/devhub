@@ -55,7 +55,7 @@ export function LoginPage() {
         {/* Logo/Title */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-blue-600">
-            <img src="/vite.svg" alt="DevHub Logo" className="h-18 w-18 object-contain" />
+            <img src="/vite.svg" alt="DevHub Logo" className="h-20 w-20 object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">DevHub</h1>
           <p className="mt-2 text-gray-600">Docker Management Dashboard</p>
