@@ -18,7 +18,10 @@ Common problems and how to fix them.
     VITE_API_BASE_URL=http://localhost:8888/api/v1
     ```
 
-    If you're accessing from another machine, replace `localhost` with the server's hostname or IP.
+    If you're accessing via Tailscale, replace `localhost` with your Tailscale hostname:
+    ```dotenv
+    VITE_API_BASE_URL=http://<tailscale-hostname>:8888/api/v1
+    ```
 
 2. **Backend not running yet**
 

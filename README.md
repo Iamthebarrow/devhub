@@ -45,10 +45,18 @@ See `.env.example` for defaults. The key variables are:
 - Ensure `CSRF_TRUSTED_ORIGINS` includes `http://localhost:3100`
 - If using refresh cookies, the frontend must send `credentials: "include"`
 
-### Accessing from another host (e.g., Tailscale)
+### Accessing via Tailscale
 
-- Set `VITE_API_BASE_URL=http://server:8888/api/v1` in `.env` so the browser uses the reachable backend host.
-- Add `http://server:3100` to `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in `.env`.
+This is the preferred setup for accessing DevHub from another device. Replace `<tailscale-hostname>` with your machine's Tailscale hostname (find it in the Tailscale admin panel or by running `tailscale status`).
+
+```dotenv
+VITE_API_BASE_URL=http://<tailscale-hostname>:8888/api/v1
+CORS_ALLOWED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+CSRF_TRUSTED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,<tailscale-hostname>
+```
+
+Restart the stack after editing `.env`. No router port forwarding required — Tailscale handles the routing.
 
 ### Backend not reaching Docker
 

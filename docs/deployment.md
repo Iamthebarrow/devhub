@@ -27,34 +27,33 @@ Services:
 
 ---
 
-## Accessing from Another Machine (e.g. Tailscale / LAN)
+## Accessing Remotely via Tailscale
 
-If you want to access DevHub from another device on the same network or over a VPN:
+The preferred way to access DevHub from another device. Tailscale handles routing between your devices without requiring any port forwarding or firewall changes.
 
-1. Set `VITE_API_BASE_URL` to the backend's hostname as seen by the browser — not `localhost`:
+### Setup
 
-    ```dotenv
-    VITE_API_BASE_URL=http://server:8888/api/v1
-    ```
+Find your machine's Tailscale hostname by running `tailscale status` on the host machine, or check the [Tailscale admin panel](https://login.tailscale.com/admin/machines). It will look something like `my-machine` (short name) or `my-machine.tail12345.ts.net` (full MagicDNS name).
 
-2. Add the frontend's external origin to CORS and CSRF settings:
+Add these to your root `.env`:
 
-    ```dotenv
-    CORS_ALLOWED_ORIGINS=http://localhost:3100,http://server:3100
-    CSRF_TRUSTED_ORIGINS=http://localhost:3100,http://server:3100
-    ```
+```dotenv
+VITE_API_BASE_URL=http://<tailscale-hostname>:8888/api/v1
+CORS_ALLOWED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+CSRF_TRUSTED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,<tailscale-hostname>
+```
 
-3. Add the server hostname to `DJANGO_ALLOWED_HOSTS`:
+Then restart the stack:
 
-    ```dotenv
-    DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,server
-    ```
+```bash
+docker compose up --build
+```
 
-4. Restart the stack:
+Access the app from any device on your Tailnet at `http://<tailscale-hostname>:3100`.
 
-    ```bash
-    docker compose up --build
-    ```
+!!! tip "MagicDNS"
+    If you have Tailscale MagicDNS enabled, the short machine name works as the hostname (e.g. `my-machine`). If not, use the Tailscale IP address (`100.x.x.x`) instead.
 
 ---
 
