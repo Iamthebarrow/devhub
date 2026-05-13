@@ -1,4 +1,4 @@
-# DevHub
+# Docs
 
 **A self-hosted Docker management dashboard — built for developers who want visibility and control without the complexity.**
 
