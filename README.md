@@ -1,22 +1,25 @@
 # DevHub
 
-DevHub is a local-first Docker management stack with a Django + DRF backend and a React + Vite frontend.
+DevHub is a self-hosted Docker management dashboard with a Django + DRF backend and a React + Vite frontend. Manage containers, images, volumes, and networks from a browser, with role-based access control and an immutable audit log.
+
+**[Full Documentation →](https://Iamthebarrow.github.io/devhub/)**
 
 ## Quick Start (Docker)
 
 ```bash
 cp .env.example .env
+# Set DJANGO_SECRET_KEY and DEV_ADMIN_PASSWORD in .env
 docker compose up --build
 ```
 
 ## Services
 
-- **Frontend**: http://localhost:5173 (or http://server:5173 if accessing remotely)
-- **Backend API**: http://localhost:8000/api/v1/ (or http://server:8000/api/v1/)
-- **Swagger Docs**: http://localhost:8000/api/docs/
-- **OpenAPI Schema**: http://localhost:8000/api/schema/
-- **Health**: http://localhost:8000/api/v1/health/
-- **Version**: http://localhost:8000/api/v1/version/
+- **Frontend**: http://localhost:3100 (or http://server:3100 if accessing remotely)
+- **Backend API**: http://localhost:8888/api/v1/ (or http://server:8888/api/v1/)
+- **Swagger Docs**: http://localhost:8888/api/docs/
+- **OpenAPI Schema**: http://localhost:8888/api/schema/
+- **Health**: http://localhost:8888/api/v1/health/
+- **Version**: http://localhost:8888/api/v1/version/
 
 ## Stop and Clean Up
 
@@ -38,14 +41,14 @@ See `.env.example` for defaults. The key variables are:
 
 ### CORS or Cookie Issues
 
-- Ensure `CORS_ALLOWED_ORIGINS` includes `http://localhost:5173`
-- Ensure `CSRF_TRUSTED_ORIGINS` includes `http://localhost:5173`
+- Ensure `CORS_ALLOWED_ORIGINS` includes `http://localhost:3100`
+- Ensure `CSRF_TRUSTED_ORIGINS` includes `http://localhost:3100`
 - If using refresh cookies, the frontend must send `credentials: "include"`
 
 ### Accessing from another host (e.g., Tailscale)
 
-- Set `VITE_API_BASE_URL=http://server:8000/api/v1` in `.env` so the browser uses the reachable backend host.
-- Add `http://server:5173` to `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in `.env`.
+- Set `VITE_API_BASE_URL=http://server:8888/api/v1` in `.env` so the browser uses the reachable backend host.
+- Add `http://server:3100` to `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in `.env`.
 
 ### Backend not reaching Docker
 

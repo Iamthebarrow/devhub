@@ -1,0 +1,152 @@
+# ==============================================================================
+# DevHub — Zensical documentation site configuration
+# Docs: https://zensical.org/docs/
+# ==============================================================================
+
+[project]
+site_name        = "DevHub"
+site_description = "A self-hosted Docker management dashboard with role-based access and audit logging"
+site_author      = "Ian Barrow"
+site_url         = "https://Iamthebarrow.github.io/devhub/"
+repo_url         = "https://github.com/Iamthebarrow/devhub"
+repo_name        = "Iamthebarrow/devhub"
+edit_uri         = "edit/main/docs/"
+copyright        = "Copyright &copy; 2026 Ian Barrow. All rights reserved."
+
+# Navigation — nested sections map to collapsible sidebar groups
+nav = [
+    { "Home" = "index.md" },
+    { "Getting Started" = [
+        { "Quick Start"   = "getting-started.md" },
+        { "Installation"  = "installation.md" },
+    ]},
+    { "Usage" = [
+        { "Using the App" = "usage.md" },
+        { "Features"      = "features.md" },
+        { "Screenshots"   = "screenshots.md" },
+    ]},
+    { "Reference" = [
+        { "Project Structure" = "project-structure.md" },
+        { "Configuration"     = "configuration.md" },
+        { "API Reference"     = "api.md" },
+    ]},
+    { "Deployment"     = "deployment.md" },
+    { "Contributing"   = "contributing.md" },
+    { "Troubleshooting" = "troubleshooting.md" },
+]
+
+# ------------------------------------------------------------------------------
+# Theme
+# ------------------------------------------------------------------------------
+[project.theme]
+language = "en"
+
+# "classic" gives you the familiar Material for MkDocs look.
+# Remove this line to use Zensical's default theme variant.
+variant = "classic"
+
+features = [
+    # Code blocks
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+
+    # Tooltips on links
+    "content.tooltips",
+
+    # Linked content tabs (switching one switches all matching tabs)
+    "content.tabs.link",
+
+    # Footnote tooltips
+    "content.footnote.tooltips",
+
+    # Navigation
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.tabs",
+    "navigation.tabs.sticky",
+    "navigation.top",
+    "navigation.tracking",
+
+    # Search
+    "search.highlight",
+
+    # Announce bar dismiss button
+    "announce.dismiss",
+]
+
+# Light / dark mode toggle
+[[project.theme.palette]]
+scheme       = "default"
+primary      = "deep purple"
+accent       = "indigo"
+toggle.icon  = "lucide/sun"
+toggle.name  = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme       = "slate"
+primary      = "deep purple"
+accent       = "indigo"
+toggle.icon  = "lucide/moon"
+toggle.name  = "Switch to light mode"
+
+# ------------------------------------------------------------------------------
+# Social links (footer)
+# ------------------------------------------------------------------------------
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/Iamthebarrow/devhub"
+
+# ------------------------------------------------------------------------------
+# Markdown extensions
+# ------------------------------------------------------------------------------
+
+# Standard Python Markdown
+[project.markdown_extensions.abbr]
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.attr_list]
+[project.markdown_extensions.def_list]
+[project.markdown_extensions.footnotes]
+[project.markdown_extensions.md_in_html]
+[project.markdown_extensions.tables]
+
+[project.markdown_extensions.toc]
+permalink = true
+
+# PyMdown Extensions
+[project.markdown_extensions.pymdownx.details]
+
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums      = true
+line_spans           = "__span"
+pygments_lang_class  = true
+
+[project.markdown_extensions.pymdownx.inlinehilite]
+[project.markdown_extensions.pymdownx.snippets]
+
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+    { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }
+]
+
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style      = true
+combine_header_slug  = true
+
+[project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true
+
+[project.markdown_extensions.pymdownx.emoji]
+emoji_index     = "zensical.extensions.emoji.twemoji"
+emoji_generator = "zensical.extensions.emoji.to_svg"
+
+[project.markdown_extensions.pymdownx.betterem]
+[project.markdown_extensions.pymdownx.caret]
+[project.markdown_extensions.pymdownx.mark]
+[project.markdown_extensions.pymdownx.tilde]
+[project.markdown_extensions.pymdownx.keys]
+[project.markdown_extensions.pymdownx.smartsymbols]
