@@ -1,9 +1,10 @@
 /**
- * Audit query hooks using TanStack Query (Phase 5).
+ * Audit query hooks using TanStack Query (Phase 2 — Industry-standard MVP).
  */
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { listAuditEvents } from '../../api/audit'
+import { ApiRequestError } from '../../api/client'
 import type { AuditEventsParams } from '../../api/types'
 
 // =============================================================================
@@ -17,26 +18,39 @@ export const auditKeys = {
 }
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+/** Check if an error represents a 404 (endpoint not found). */
+export function isAudit404(error: unknown): boolean {
+  if (error instanceof ApiRequestError) {
+    return error.status === 404
+  }
+  if (error instanceof Error) {
+    return error.message.includes('404') || error.message.includes('Not Found')
+  }
+  return false
+}
+
+// =============================================================================
 // Audit Hooks
 // =============================================================================
 
 /**
- * Hook to fetch audit events list.
- * Used in AuditPage.
+ * Hook to fetch a paginated list of audit events.
  *
- * DEFAULT DECISION: If endpoint 404s, error will be caught and handled
- * by the component to show "Audit coming soon" message.
+ * - Uses keepPreviousData so the table doesn't flash empty on page change.
+ * - Never retries on 404 (endpoint may not exist).
+ * - Retries once on other errors.
  */
 export function useAuditEvents(params?: AuditEventsParams) {
   return useQuery({
     queryKey: auditKeys.eventsList(params),
     queryFn: () => listAuditEvents(params),
-    staleTime: 30_000, // 30 seconds
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
     retry: (failureCount, error) => {
-      // Don't retry on 404 - endpoint might not exist
-      if (error instanceof Error && error.message.includes('404')) {
-        return false
-      }
+      if (isAudit404(error)) return false
       return failureCount < 1
     },
   })

@@ -384,6 +384,27 @@ See [docs/decisions.md](docs/decisions.md) for the full rationale.
 | `make clean` | Stop and remove containers |
 | `make install-hooks` | Install pre-commit hooks |
 
+## Remote Access via Tailscale
+
+The preferred way to access DevHub from another device is via Tailscale. No port forwarding required.
+
+Set these variables in the root `.env` before starting the stack, replacing `<tailscale-hostname>` with your machine's Tailscale hostname (`tailscale status` will show it):
+
+```dotenv
+VITE_API_BASE_URL=http://<tailscale-hostname>:8888/api/v1
+CORS_ALLOWED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+CSRF_TRUSTED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,<tailscale-hostname>
+```
+
+Then restart the stack:
+
+```bash
+docker compose up --build
+```
+
+Access the app from any device on your Tailnet at `http://<tailscale-hostname>:3100`.
+
 ## Production Checklist
 
 Before deploying to production:

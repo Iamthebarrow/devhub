@@ -34,7 +34,7 @@ export function ContainersPage() {
   )
 
   // Fetch containers
-  const { data, isLoading, isError, error, refetch } = useContainers(queryParams)
+  const { data, isLoading, isError, error, refetch, isFetching } = useContainers(queryParams)
 
   // Get container name (backend now provides name directly)
   const getContainerName = (container: DockerContainerSummary): string => {
@@ -112,10 +112,12 @@ export function ContainersPage() {
           </select>
           <button
             onClick={() => refetch()}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 hover:bg-gray-50"
+            disabled={isFetching}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             title="Refresh"
+            aria-label={isFetching ? 'Refreshing...' : 'Refresh'}
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
             <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>

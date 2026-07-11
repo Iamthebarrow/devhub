@@ -11,7 +11,7 @@
 
 import { useAuthStore } from '../features/auth'
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888/api/v1'
 
 // Track if a refresh is in progress (single-flight lock)
 let refreshPromise: Promise<string | null> | null = null

@@ -7,14 +7,28 @@ import { ContainerDetailPage } from './ContainerDetailPage'
 import { useAuthStore } from '../features/auth'
 import { mockContainers } from '../test/mocks/handlers'
 
+// Use vi.hoisted to define mocks that can be used in vi.mock factory
+const { mockToastSuccess, mockToastError } = vi.hoisted(() => ({
+  mockToastSuccess: vi.fn(),
+  mockToastError: vi.fn(),
+}))
+
 // Mock react-hot-toast
 vi.mock('react-hot-toast', () => ({
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mockToastSuccess,
+    error: mockToastError,
   },
   Toaster: () => null,
 }))
+
+// Mock clipboard API
+const mockWriteText = vi.fn()
+Object.assign(navigator, {
+  clipboard: {
+    writeText: mockWriteText,
+  },
+})
 
 // Helper to render with required providers
 const createTestQueryClient = () =>
@@ -43,6 +57,12 @@ const renderWithProviders = (containerId: string) => {
 describe('ContainerDetailPage', () => {
   const runningContainer = mockContainers[0] // nginx-proxy, running
   const exitedContainer = mockContainers[2] // redis-cache, exited
+
+  beforeEach(() => {
+    // Reset mocks before each test
+    vi.clearAllMocks()
+    mockWriteText.mockResolvedValue(undefined)
+  })
 
   describe('with admin/operator role', () => {
     beforeEach(() => {
@@ -332,4 +352,46 @@ describe('ContainerDetailPage', () => {
       expect(tailSelect).toHaveValue('500')
     })
   })
+
+  describe('Copy button functionality', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        status: 'authenticated',
+        accessToken: 'test-token',
+        user: { id: 1, username: 'testuser', roles: ['admin'] },
+      })
+    })
+
+    it('Copy button is always enabled (has fallback for empty logs)', async () => {
+      renderWithProviders(runningContainer.id)
+
+      await waitFor(() => {
+        expect(screen.getAllByText('nginx-proxy').length).toBeGreaterThan(0)
+      })
+
+      // Copy button should be enabled - it has a fallback to copy container name + id
+      const copyButton = screen.getByRole('button', { name: /copy/i })
+      expect(copyButton).not.toBeDisabled()
+    })
+
+    it('Copy button shows success toast when clipboard succeeds', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(runningContainer.id)
+
+      // Wait for logs to load
+      await waitFor(() => {
+        expect(screen.getByText(/nginx-proxy started/i)).toBeInTheDocument()
+      })
+
+      // Click Copy button
+      const copyButton = screen.getByRole('button', { name: /copy/i })
+      await user.click(copyButton)
+
+      // Should show success toast (clipboard succeeded via mock or execCommand fallback)
+      await waitFor(() => {
+        expect(mockToastSuccess).toHaveBeenCalledWith('Copied to clipboard')
+      })
+    })
+  })
+
 })

@@ -299,9 +299,47 @@ function ActionsBar({
 }
 
 /**
- * Logs panel with tail selector and auto-refresh toggle.
+ * Copy text to clipboard with fallback for older browsers.
+ * Returns true on success, false on failure.
  */
-function LogsPanel({ containerId }: { containerId: string }) {
+async function copyToClipboard(text: string): Promise<boolean> {
+  // Modern Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      // Fall through to legacy approach
+    }
+  }
+
+  // Fallback for older browsers
+  try {
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    textArea.style.position = 'fixed'
+    textArea.style.left = '-9999px'
+    document.body.appendChild(textArea)
+    textArea.select()
+    const success = document.execCommand('copy')
+    document.body.removeChild(textArea)
+    return success
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Logs panel with tail selector and auto-refresh toggle.
+ * Phase 1: Fixed Copy button with fallback to container name + id.
+ */
+function LogsPanel({
+  containerId,
+  containerName,
+}: {
+  containerId: string
+  containerName: string
+}) {
   const [tail, setTail] = useState<number>(DEFAULT_TAIL)
   const [autoRefresh, setAutoRefresh] = useState(false)
 
@@ -311,13 +349,21 @@ function LogsPanel({ containerId }: { containerId: string }) {
     { autoRefresh }
   )
 
-  // Copy logs to clipboard
-  const handleCopyLogs = () => {
-    if (data?.logs) {
-      navigator.clipboard.writeText(data.logs)
-      toast.success('Logs copied to clipboard')
+  // Copy logs to clipboard with fallback
+  // DEFAULT: Copy logs if available, otherwise copy container name + id
+  const handleCopyLogs = async () => {
+    const textToCopy = data?.logs
+      ? data.logs
+      : `${containerName} (${containerId})`
+
+    const success = await copyToClipboard(textToCopy)
+    if (success) {
+      toast.success('Copied to clipboard')
+    } else {
+      toast.error('Failed to copy to clipboard')
     }
   }
+
 
   return (
     <div className="rounded-lg bg-white shadow-sm">
@@ -356,12 +402,11 @@ function LogsPanel({ containerId }: { containerId: string }) {
             </span>
           </label>
 
-          {/* Copy logs button */}
+          {/* Copy logs button - always enabled with fallback */}
           <button
             onClick={handleCopyLogs}
-            disabled={!data?.logs}
-            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            title="Copy logs to clipboard"
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
+            title={data?.logs ? 'Copy logs to clipboard' : 'Copy container info to clipboard'}
           >
             <Copy className="h-4 w-4" />
             Copy
@@ -481,6 +526,7 @@ function LabelsSection({ labels }: { labels: Record<string, string> }) {
 /**
  * Container detail page.
  * Phase 4: Full detail, logs, and lifecycle actions with role-based visibility.
+ * Phase 1 (UX): Added page-level Refresh button for detail + logs.
  */
 export function ContainerDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -596,7 +642,7 @@ export function ContainerDetailPage() {
       description={`Container ${shortId}`}
     >
       <div className="space-y-6">
-        {/* Header with back link and actions */}
+        {/* Header with back link, refresh, and actions */}
         <div className="flex items-center justify-between">
           <Link
             to="/containers"
@@ -704,7 +750,12 @@ export function ContainerDetailPage() {
         </div>
 
         {/* Logs panel */}
-        {id && <LogsPanel containerId={id} />}
+        {id && (
+          <LogsPanel
+            containerId={id}
+            containerName={containerName}
+          />
+        )}
       </div>
     </PageShell>
   )

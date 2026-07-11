@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8888:8888"
     volumes:
       - .:/app
       # Mount Docker socket for local dev (direct access)
@@ -21,7 +21,7 @@ services:
         condition: service_started
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+             python manage.py runserver 0.0.0.0:8888"
 
   # Celery worker for background tasks (Phase 5)
   worker:

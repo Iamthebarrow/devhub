@@ -855,7 +855,7 @@ class DockerService:
 
         # Get IPAM config safely (just subnet info, not gateway)
         ipam = attrs.get("IPAM", {})
-        ipam_config = ipam.get("Config", [])
+        ipam_config = ipam.get("Config") or []
         subnets = [cfg.get("Subnet", "") for cfg in ipam_config if cfg.get("Subnet")]
 
         return {

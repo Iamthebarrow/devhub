@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { PageShell } from '../components/layout/PageShell'
 import { Search, Network, RefreshCw, AlertCircle } from 'lucide-react'
-import { useNetworks, dockerKeys } from '../features/docker'
-import { useQueryClient } from '@tanstack/react-query'
+import { useNetworks } from '../features/docker'
 import type { DockerNetwork } from '../api/types'
 
 /**
@@ -22,9 +21,8 @@ function getSubnet(network: DockerNetwork): string {
  */
 export function NetworksPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const queryClient = useQueryClient()
 
-  const { data, isLoading, isError, error, refetch } = useNetworks()
+  const { data, isLoading, isError, error, refetch, isFetching } = useNetworks()
 
   const networks = data?.results ?? []
 
@@ -39,16 +37,15 @@ export function NetworksPage() {
     )
   })
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: dockerKeys.networks() })
-  }
-
   const actions = (
     <button
-      onClick={handleRefresh}
-      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+      onClick={() => refetch()}
+      disabled={isFetching}
+      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      title="Refresh"
+      aria-label={isFetching ? 'Refreshing...' : 'Refresh'}
     >
-      <RefreshCw className="h-4 w-4" />
+      <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
       Refresh
     </button>
   )

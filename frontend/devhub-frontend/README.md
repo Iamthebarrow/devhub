@@ -120,7 +120,7 @@ src/
 If you see CORS errors in the console:
 
 1. Ensure the backend is running at the URL specified in `VITE_API_BASE_URL`
-2. Verify the backend has CORS configured to allow `http://localhost:5173`
+2. Verify the backend has CORS configured to allow the frontend's origin
 3. Check that credentials mode is enabled in backend CORS config (for refresh token cookies)
 
 Example backend CORS config (Django):
@@ -130,6 +130,19 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 ```
+
+### Accessing via Tailscale
+
+To access DevHub from another device on your Tailnet, update `.env` in the project root:
+
+```dotenv
+VITE_API_BASE_URL=http://<tailscale-hostname>:8888/api/v1
+CORS_ALLOWED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+CSRF_TRUSTED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,<tailscale-hostname>
+```
+
+Replace `<tailscale-hostname>` with your machine's Tailscale hostname. No port forwarding required.
 
 ### Backend Connection Issues
 

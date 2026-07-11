@@ -201,17 +201,30 @@ export const NetworksListSchema = z.object({
 })
 
 // =============================================================================
-// Audit Schemas (Phase 5)
+// Audit Schemas (Phase 2 — Industry-standard MVP)
 // =============================================================================
 
+// Actor can be { id, username }, a bare string, or null
+const AuditActorSchema = z.union([
+  z.object({ id: z.number(), username: z.string() }),
+  z.string(),
+  z.null(),
+])
+
 export const AuditEventSchema = z.object({
-  id: z.number(),
-  timestamp: z.string(),
-  actor: z.string(),
+  id: z.string(),
+  created_at: z.string(),
+  actor: AuditActorSchema,
+  ip_address: z.string().nullable().optional().default(null),
+  user_agent: z.string().nullable().optional().default(null),
   action: z.string(),
-  resource: z.string(),
-  status: z.enum(['success', 'failed']),
-  details: z.record(z.string(), z.unknown()).optional(),
+  resource_type: z.string().default(''),
+  resource_id: z.string().default(''),
+  resource_name: z.string().nullable().optional().default(null),
+  request_id: z.string().nullable().optional().default(null),
+  status: z.enum(['success', 'error']),
+  error_message: z.string().nullable().optional().default(null),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional().default(null),
 })
 
 export const AuditEventsResponseSchema = z.object({

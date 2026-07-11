@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { PageShell } from '../components/layout/PageShell'
 import { Search, Download, Trash2, RefreshCw, AlertCircle } from 'lucide-react'
-import { useImages, usePullImage, useRemoveImage, dockerKeys } from '../features/docker'
+import { useImages, usePullImage, useRemoveImage } from '../features/docker'
 import { useCanPullImages, useIsAdmin } from '../features/auth'
-import { useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import type { DockerImageSummary } from '../api/types'
 
@@ -138,11 +137,10 @@ export function ImagesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [confirmRemove, setConfirmRemove] = useState<DockerImageSummary | null>(null)
 
-  const queryClient = useQueryClient()
   const canPull = useCanPullImages()
   const isAdmin = useIsAdmin()
 
-  const { data, isLoading, isError, error, refetch } = useImages()
+  const { data, isLoading, isError, error, refetch, isFetching } = useImages()
   const pullMutation = usePullImage()
   const removeMutation = useRemoveImage()
 
@@ -196,16 +194,15 @@ export function ImagesPage() {
     )
   }
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: dockerKeys.images() })
-  }
-
   const actions = (
     <button
-      onClick={handleRefresh}
-      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+      onClick={() => refetch()}
+      disabled={isFetching}
+      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      title="Refresh"
+      aria-label={isFetching ? 'Refreshing...' : 'Refresh'}
     >
-      <RefreshCw className="h-4 w-4" />
+      <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
       Refresh
     </button>
   )
