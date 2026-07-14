@@ -40,11 +40,11 @@ Infra     →  Docker Compose (6 services)
 
 ## Quick Links
 
-- [Quick Start →](getting-started.md): Up and running in 5 minutes
-- [Features →](features.md): What each part of the app does
-- [API Reference →](api.md): Full endpoint list
-- [Configuration →](configuration.md): All environment variables
-- [Troubleshooting →](troubleshooting.md): Common issues and fixes
+- [Quick Start →](getting-started.md) Up and running in 5 minutes
+- [Features →](features.md) What each part of the app does
+- [API Reference →](api.md) Full endpoint list
+- [Configuration →](configuration.md) All environment variables
+- [Troubleshooting →](troubleshooting.md) Common issues and fixes
 
 ---
 
