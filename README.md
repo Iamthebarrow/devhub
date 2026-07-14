@@ -56,7 +56,7 @@ CSRF_TRUSTED_ORIGINS=http://localhost:3100,http://<tailscale-hostname>:3100
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,<tailscale-hostname>
 ```
 
-Restart the stack after editing `.env`. No router port forwarding required — Tailscale handles the routing.
+Restart the stack after editing `.env`. No router port forwarding required; Tailscale handles the routing.
 
 ### Backend not reaching Docker
 

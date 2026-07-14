@@ -13,7 +13,7 @@ The standard Docker Compose setup is covered in [Installation](installation.md).
 
 ```bash
 cp .env.example .env
-# Edit .env — at minimum set DJANGO_SECRET_KEY and DEV_ADMIN_PASSWORD
+# Edit .env: at minimum set DJANGO_SECRET_KEY and DEV_ADMIN_PASSWORD
 docker compose up --build
 ```
 
@@ -80,15 +80,15 @@ If you want to run DevHub with more stability (not necessarily public-facing), h
 
 The current Docker Compose setup does not include a TLS terminator. To add HTTPS you have several options:
 
-**Option A — Nginx reverse proxy (local/self-signed)**
+**Option A: Nginx reverse proxy (local/self-signed)**
 
 Add an Nginx container to `docker-compose.yml` that listens on 443, terminates TLS, and proxies to `frontend:3100` and `backend:8888`.
 
-**Option B — Caddy (automatic HTTPS)**
+**Option B: Caddy (automatic HTTPS)**
 
 Replace Nginx with a [Caddy](https://caddyserver.com/) container. Caddy handles certificate provisioning automatically for public domains.
 
-**Option C — Cloudflare Tunnel**
+**Option C: Cloudflare Tunnel**
 
 For homelab use without opening router ports: use a Cloudflare Tunnel to expose DevHub securely.
 

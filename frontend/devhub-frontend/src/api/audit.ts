@@ -1,5 +1,5 @@
 /**
- * Audit API module (Phase 2 — Industry-standard MVP).
+ * Audit API module (Phase 2: Industry-standard MVP).
  *
  * DEFAULT DECISION: Endpoint is GET /api/v1/audit/events/
  * If backend returns 404, the UI shows a friendly "Audit not available" message.

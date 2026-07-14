@@ -226,7 +226,7 @@ export interface DockerNetwork {
 }
 
 // =============================================================================
-// Audit Types (Phase 2 — Industry-standard MVP)
+// Audit Types (Phase 2: Industry-standard MVP)
 // =============================================================================
 
 /**

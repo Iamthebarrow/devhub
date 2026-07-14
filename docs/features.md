@@ -1,6 +1,6 @@
 # Features
 
-A deep-dive into each feature — what it does, where it lives in the codebase, how you interact with it, and notes for future development.
+A deep-dive into each feature: what it does, where it lives in the codebase, how you interact with it, and notes for future development.
 
 ---
 
@@ -10,8 +10,8 @@ A deep-dive into each feature — what it does, where it lives in the codebase, 
 
 DevHub uses **JWT-based authentication** with a two-token model:
 
-- **Access token** — short-lived (10 min), stored in memory only, sent as a `Bearer` header
-- **Refresh token** — long-lived (14 days), stored as an HttpOnly cookie, never accessible to JavaScript
+- **Access token**: short-lived (10 min), stored in memory only, sent as a `Bearer` header
+- **Refresh token**: long-lived (14 days), stored as an HttpOnly cookie, never accessible to JavaScript
 
 This means your session persists across page refreshes without storing credentials in localStorage where XSS attacks could reach them.
 
@@ -50,7 +50,7 @@ DevHub has three roles, implemented using Django's built-in Group model:
 | `operator` | ✓ | ✓ | ✗ | ✓ |
 | `admin` | ✓ | ✓ | ✓ | ✓ |
 
-The UI adapts to the user's role — action buttons that the user cannot use are hidden rather than just disabled.
+The UI adapts to the user's role: action buttons that the user cannot use are hidden rather than just disabled.
 
 ### Where It Lives
 
@@ -71,7 +71,7 @@ The UI adapts to the user's role — action buttons that the user cannot use are
 
 ### What It Does
 
-The container list and detail views let you see all Docker containers on your host — running, stopped, paused, or exited — and take action on them.
+The container list and detail views let you see all Docker containers on your host (running, stopped, paused, or exited) and take action on them.
 
 **Actions available (Operator+ only):**
 - Start a stopped container
@@ -100,7 +100,7 @@ The container list and detail views let you see all Docker containers on your ho
 ### Notes for Future Improvement
 
 - Log streaming is currently tail-based (last N lines). Real-time WebSocket streaming is a natural next step.
-- No container creation or removal from the UI — this is by design for safety.
+- No container creation or removal from the UI; this is by design for safety.
 
 ---
 
@@ -110,8 +110,8 @@ The container list and detail views let you see all Docker containers on your ho
 
 The Images page lets you see all Docker images stored locally and take basic actions:
 
-- **Pull** a new image (e.g. `nginx:latest`, `postgres:16-alpine`) — runs as an async Celery task
-- **Remove** an image — Admin only, removes the image from the Docker host
+- **Pull** a new image (e.g. `nginx:latest`, `postgres:16-alpine`); runs as an async Celery task
+- **Remove** an image (Admin only), removes the image from the Docker host
 
 ### Where It Lives
 
@@ -123,7 +123,7 @@ The Images page lets you see all Docker images stored locally and take basic act
 
 ![Images page with the pull image dialog open](assets/images/images-pull.png)
 
-!!! note "Needs Confirmation — Async Pull Status"
+!!! note "Needs Confirmation: Async Pull Status"
     The image pull runs as a Celery background task. Whether pull progress or completion status is surfaced back to the UI is unclear from the current codebase. Confirm this behaviour before documenting it further.
 
 ---
@@ -139,8 +139,8 @@ These two views give you visibility into your Docker volumes and networks withou
 | Layer | Location |
 |---|---|
 | Backend views | `backend/devhub-backend/apps/docker_manager/views/` |
-| Frontend — Volumes | `frontend/devhub-frontend/src/pages/VolumesPage.tsx` |
-| Frontend — Networks | `frontend/devhub-frontend/src/pages/NetworksPage.tsx` |
+| Frontend: Volumes | `frontend/devhub-frontend/src/pages/VolumesPage.tsx` |
+| Frontend: Networks | `frontend/devhub-frontend/src/pages/NetworksPage.tsx` |
 
 ![Volumes page showing read-only Docker volume list](assets/images/volumes-page.png)
 
@@ -166,7 +166,7 @@ Each event records:
 - Whether it succeeded or failed
 - The request ID for correlation
 
-Events **cannot be edited or deleted** — the model raises a `ValueError` if an update or delete is attempted, enforced at the ORM level.
+Events **cannot be edited or deleted**: the model raises a `ValueError` if an update or delete is attempted, enforced at the ORM level.
 
 ### Where It Lives
 
@@ -190,8 +190,8 @@ Events **cannot be edited or deleted** — the model raises a `ValueError` if an
 
 DevHub protects its API with two layers of rate limiting:
 
-1. **DRF throttling** — limits requests per unit of time per user/IP
-2. **django-axes** — locks accounts after repeated failed login attempts
+1. **DRF throttling**: limits requests per unit of time per user/IP
+2. **django-axes**: locks accounts after repeated failed login attempts
 
 Default limits (all configurable via `.env`):
 
@@ -216,7 +216,7 @@ Default limits (all configurable via `.env`):
 
 ### What It Does
 
-Instead of mounting the Docker socket directly into the backend container — which would give it unrestricted access to your Docker daemon — DevHub uses [`tecnativa/docker-socket-proxy`](https://github.com/Tecnativa/docker-socket-proxy) as an intermediary.
+Instead of mounting the Docker socket directly into the backend container (which would give it unrestricted access to your Docker daemon), DevHub uses [`tecnativa/docker-socket-proxy`](https://github.com/Tecnativa/docker-socket-proxy) as an intermediary.
 
 The proxy exposes only the Docker API endpoints that DevHub actually needs, and blocks everything else. This limits the blast radius if the backend were ever compromised.
 

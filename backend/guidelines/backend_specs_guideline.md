@@ -1,4 +1,4 @@
-# DevHub Backend Specs (Django) — Guideline for Another LLM
+# DevHub Backend Specs (Django): Guideline for Another LLM
 
 This document is a **development contract**. Implement exactly what’s specified, keep changes minimal, and add anything only if required for correctness/security. When assumptions are necessary, write them down in `docs/decisions.md` with rationale.
 

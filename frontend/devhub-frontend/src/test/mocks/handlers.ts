@@ -515,7 +515,7 @@ export const handlers = [
   // Audit API (Phase 5)
   // ==========================================================================
 
-  // Audit events list (Phase 2 — supports pagination & filters)
+  // Audit events list (Phase 2: supports pagination & filters)
   http.get(`${API_BASE_URL}/audit/events/`, ({ request }) => {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -661,7 +661,7 @@ export const mockNetworks = [
   },
 ]
 
-// Mock audit events — matches backend AuditEvent model (Phase 2)
+// Mock audit events, matches backend AuditEvent model (Phase 2)
 export const mockAuditEvents = [
   {
     id: 'a1b2c3d4-0001-4000-8000-000000000001',

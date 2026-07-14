@@ -1,6 +1,6 @@
 # Project Structure
 
-A map of the codebase — where things live and why they are organised the way they are.
+A map of the codebase: where things live and why they are organised the way they are.
 
 ---
 
@@ -69,13 +69,13 @@ backend/devhub-backend/
 
 ### Key Backend Concepts
 
-**`docker_service.py`** — All communication with Docker goes through this single service class. Views never talk to Docker directly. This makes the Docker integration easy to mock in tests and easy to replace if needed.
+**`docker_service.py`**: All communication with Docker goes through this single service class. Views never talk to Docker directly. This makes the Docker integration easy to mock in tests and easy to replace if needed.
 
-**`permissions.py`** — Three permission classes that check Django Group membership. Used in view `permission_classes`. If the user is not in the right group, they get a 403.
+**`permissions.py`**: Three permission classes that check Django Group membership. Used in view `permission_classes`. If the user is not in the right group, they get a 403.
 
-**`audit/models.py`** — The `AuditEvent` model overrides `save()` and `delete()` to raise `ValueError` on updates or deletes. Audit records are permanent by design.
+**`audit/models.py`**: The `AuditEvent` model overrides `save()` and `delete()` to raise `ValueError` on updates or deletes. Audit records are permanent by design.
 
-**`middleware.py`** — Attaches a UUID `X-Request-ID` to every request. This ID flows into audit events and log lines, making it possible to trace a full request through all the logs.
+**`middleware.py`**: Attaches a UUID `X-Request-ID` to every request. This ID flows into audit events and log lines, making it possible to trace a full request through all the logs.
 
 ---
 
@@ -86,7 +86,7 @@ frontend/devhub-frontend/
 ├── src/
 │   ├── main.tsx                 App entry point (React + Vite)
 │   ├── app/
-│   │   ├── App.tsx              Root component — providers + router
+│   │   ├── App.tsx              Root component: providers + router
 │   │   ├── routes.tsx           All route definitions (public + protected)
 │   │   └── providers.tsx        QueryClient, BrowserRouter, ErrorBoundary, Toast
 │   ├── api/
@@ -109,7 +109,7 @@ frontend/devhub-frontend/
 │   │       └── RefreshButton.tsx
 │   ├── features/
 │   │   ├── auth/
-│   │   │   ├── authStore.ts     Zustand store — access token + user state
+│   │   │   ├── authStore.ts     Zustand store: access token + user state
 │   │   │   ├── AuthBootstrap.tsx  Runs refresh+me on app load to restore session
 │   │   │   ├── ProtectedRoute.tsx  Redirects to /login if not authenticated
 │   │   │   └── PublicRoute.tsx  Redirects to / if already authenticated
@@ -137,13 +137,13 @@ frontend/devhub-frontend/
 
 ### Key Frontend Concepts
 
-**`api/client.ts`** — The base HTTP client handles the access token lifecycle. It attaches the `Authorization` header, catches 401 responses, fires a single token refresh request (regardless of how many requests 401 at once), and retries. This logic is centralised here so individual hooks and pages never need to think about it.
+**`api/client.ts`**: The base HTTP client handles the access token lifecycle. It attaches the `Authorization` header, catches 401 responses, fires a single token refresh request (regardless of how many requests 401 at once), and retries. This logic is centralised here so individual hooks and pages never need to think about it.
 
-**`features/auth/authStore.ts`** — Zustand store that holds the access token and current user info. Keeps the token in memory only — never in localStorage or sessionStorage.
+**`features/auth/authStore.ts`**: Zustand store that holds the access token and current user info. Keeps the token in memory only, never in localStorage or sessionStorage.
 
-**`features/auth/AuthBootstrap.tsx`** — On initial app load, tries to restore the session by calling `/auth/refresh/` (using the cookie) then `/auth/me/`. If it works, the user is authenticated without seeing a login page. If it fails, the user goes to login.
+**`features/auth/AuthBootstrap.tsx`**: On initial app load, tries to restore the session by calling `/auth/refresh/` (using the cookie) then `/auth/me/`. If it works, the user is authenticated without seeing a login page. If it fails, the user goes to login.
 
-**`app/routes.tsx`** — Route definitions. Public routes (login) redirect authenticated users away. Protected routes redirect unauthenticated users to login. All protected routes render inside `AppLayout`.
+**`app/routes.tsx`**: Route definitions. Public routes (login) redirect authenticated users away. Protected routes redirect unauthenticated users to login. All protected routes render inside `AppLayout`.
 
 ---
 
@@ -152,12 +152,12 @@ frontend/devhub-frontend/
 ```
 docker-compose.yml
 │
-├── postgres:16-alpine           Database — port 5432
-├── redis:7-alpine               Cache / Celery broker — port 6379
-├── docker-socket-proxy          Restricted Docker API proxy — port 2375
-├── backend                      Django API — port 8888
+├── postgres:16-alpine           Database (port 5432)
+├── redis:7-alpine               Cache / Celery broker (port 6379)
+├── docker-socket-proxy          Restricted Docker API proxy (port 2375)
+├── backend                      Django API (port 8888)
 ├── worker                       Celery worker (no exposed port)
-└── frontend                     React dev server — port 3100
+└── frontend                     React dev server (port 3100)
 ```
 
 The startup order is enforced by `depends_on` with health checks. The frontend waits for the backend, the backend waits for postgres and redis to be healthy.

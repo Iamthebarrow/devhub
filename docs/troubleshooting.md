@@ -42,11 +42,11 @@ Common problems and how to fix them.
 
 ## Login Fails / "Invalid credentials"
 
-**Cause A — Wrong password**
+**Cause A: Wrong password**
 
 Check `DEV_ADMIN_USERNAME` and `DEV_ADMIN_PASSWORD` in your `.env`. The bootstrap creates the admin account using these values on first startup only.
 
-**Cause B — Account locked (django-axes)**
+**Cause B: Account locked (django-axes)**
 
 After 5 failed login attempts, the account is locked for 15 minutes. Wait for the cooldown to expire, or reset it manually:
 
@@ -70,9 +70,9 @@ docker compose exec backend python manage.py axes_reset_ip --ip <ip-address>
 
 **Fixes:**
 
-1. Ensure the frontend is sending requests with `credentials: "include"` — this is handled by `src/api/client.ts`, so if you're accessing the API from a custom client, you need to set this manually.
+1. Ensure the frontend is sending requests with `credentials: "include"`; this is handled by `src/api/client.ts`, so if you're accessing the API from a custom client, you need to set this manually.
 
-2. Ensure the cookie origin matches. If the frontend is on `localhost:3100` and the backend is on `localhost:8888`, the cookie is cross-origin — this requires the backend to set `SameSite=None; Secure` on the cookie, which requires HTTPS.
+2. Ensure the cookie origin matches. If the frontend is on `localhost:3100` and the backend is on `localhost:8888`, the cookie is cross-origin; this requires the backend to set `SameSite=None; Secure` on the cookie, which requires HTTPS.
 
     For local HTTP-only development, both frontend and backend need to be on the same hostname (just different ports). The default `localhost` setup should work.
 
@@ -82,7 +82,7 @@ docker compose exec backend python manage.py axes_reset_ip --ip <ip-address>
 
 **Symptom:** The Dashboard shows no containers, or actions fail with a connection error.
 
-**Check 1 — Socket proxy is running:**
+**Check 1: Socket proxy is running**
 
 ```bash
 docker compose ps docker-socket-proxy
@@ -90,7 +90,7 @@ docker compose ps docker-socket-proxy
 
 If it's not running, start it: `docker compose up -d docker-socket-proxy`
 
-**Check 2 — `DOCKER_HOST` setting:**
+**Check 2: `DOCKER_HOST` setting**
 
 Your `.env` should have:
 
@@ -98,7 +98,7 @@ Your `.env` should have:
 DOCKER_HOST=tcp://docker-socket-proxy:2375
 ```
 
-**Check 3 — Backend logs:**
+**Check 3: Backend logs**
 
 ```bash
 docker compose logs backend
@@ -112,7 +112,7 @@ Look for `DockerConnectionError` or connection refused messages.
 
 **Symptom:** Backend fails to start with a database error.
 
-**Check 1 — Postgres is healthy:**
+**Check 1: Postgres is healthy**
 
 ```bash
 docker compose ps postgres
@@ -120,15 +120,15 @@ docker compose ps postgres
 
 It should show `healthy`. If it's still starting, wait 10–15 seconds and check again.
 
-**Check 2 — `DATABASE_URL` is correct:**
+**Check 2: `DATABASE_URL` is correct**
 
 ```dotenv
 DATABASE_URL=postgres://devhub:devhub_local_password@postgres:5432/devhub
 ```
 
-The hostname `postgres` is the Docker Compose service name — it resolves internally. Don't change it to `localhost` when running inside Docker.
+The hostname `postgres` is the Docker Compose service name; it resolves internally. Don't change it to `localhost` when running inside Docker.
 
-**Check 3 — Run migrations manually:**
+**Check 3: Run migrations manually**
 
 ```bash
 docker compose exec backend python manage.py migrate
@@ -138,7 +138,7 @@ docker compose exec backend python manage.py migrate
 
 ## The Stack Starts But the Frontend Shows a Blank Page
 
-**Cause A — Build error in the frontend container**
+**Cause A: Build error in the frontend container**
 
 ```bash
 docker compose logs frontend
@@ -146,7 +146,7 @@ docker compose logs frontend
 
 Look for TypeScript or Vite errors.
 
-**Cause B — Backend health check not passing**
+**Cause B: Backend health check not passing**
 
 The frontend container waits for the backend to be healthy. If the backend health check is failing, the frontend won't start.
 
@@ -167,9 +167,9 @@ docker compose logs backend --tail=50
 ```
 
 Look for:
-- `DockerConnectionError` — Docker socket proxy issue
-- `ContainerNotFoundError` — the container was removed since the last API call
-- `500` errors — unexpected exceptions
+- `DockerConnectionError`: Docker socket proxy issue
+- `ContainerNotFoundError`: the container was removed since the last API call
+- `500` errors: unexpected exceptions
 
 ---
 

@@ -39,7 +39,7 @@ const DEBOUNCE_MS = 300
 const RELATIVE_TIME_REFRESH_MS = 60_000
 
 // =============================================================================
-// Quick Filter Chip Definitions (Phase 3 — A1)
+// Quick Filter Chip Definitions (Phase 3: A1)
 // =============================================================================
 
 /** Get YYYY-MM-DD string for N days ago. */
@@ -65,8 +65,8 @@ interface QuickFilterDef {
  *
  * Behavior: each chip toggles a single URL param on/off.
  * Chips do NOT clear other filters when toggled.
- * "Containers" and "Auth events" both use the `action` param — mutually exclusive.
- * "Last 24h" and "Last 7 days" both use the `from` param — mutually exclusive.
+ * "Containers" and "Auth events" both use the `action` param; mutually exclusive.
+ * "Last 24h" and "Last 7 days" both use the `from` param; mutually exclusive.
  */
 const QUICK_FILTERS: QuickFilterDef[] = [
   {
@@ -107,7 +107,7 @@ const QUICK_FILTERS: QuickFilterDef[] = [
 ]
 
 // =============================================================================
-// Column Definitions (Phase 3 — C8)
+// Column Definitions (Phase 3: C8)
 // =============================================================================
 
 interface ColumnDef {
@@ -194,7 +194,7 @@ async function copyText(text: string, label: string) {
 }
 
 // =============================================================================
-// CSV Export (Phase 3 — D10)
+// CSV Export (Phase 3: D10)
 // =============================================================================
 
 function escapeCsvField(value: string): string {
@@ -304,14 +304,14 @@ export function AuditPage() {
   const filterStore = useAuditFilterStore()
   const initialized = useRef(false)
 
-  // ---- Auto-refresh relative timestamps every 60s (Phase 3 — A2) ----
+  // ---- Auto-refresh relative timestamps every 60s (Phase 3: A2) ----
   const [, setTimeTick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => setTimeTick((t) => t + 1), RELATIVE_TIME_REFRESH_MS)
     return () => clearInterval(id)
   }, [])
 
-  // ---- Column visibility (Phase 3 — C8) ----
+  // ---- Column visibility (Phase 3: C8) ----
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     () => filterStore.visibleColumns.length > 0 ? filterStore.visibleColumns : DEFAULT_VISIBLE_COLUMNS
   )
@@ -349,7 +349,7 @@ export function AuditPage() {
     [visibleColumns]
   )
 
-  // ---- Read URL params — source of truth (Phase 3 — B5) ----
+  // ---- Read URL params: source of truth (Phase 3: B5) ----
   const urlStatus = searchParams.get('status') || ''
   const urlAction = searchParams.get('action') || ''
   const urlSearch = searchParams.get('search') || ''
@@ -358,7 +358,7 @@ export function AuditPage() {
   const urlPage = parseInt(searchParams.get('page') || '1', 10)
   const urlEventId = searchParams.get('event') || ''
 
-  // ---- Restore from Zustand on first mount if URL is empty (Phase 3 — B6) ----
+  // ---- Restore from Zustand on first mount if URL is empty (Phase 3: B6) ----
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
@@ -491,7 +491,7 @@ export function AuditPage() {
 
   const hasActiveFilters = urlStatus || urlAction || urlSearch || urlFrom || urlTo
 
-  // ---- Quick filter chip toggle (Phase 3 — A1) ----
+  // ---- Quick filter chip toggle (Phase 3: A1) ----
   const toggleChip = useCallback(
     (chip: QuickFilterDef) => {
       const currentValue = searchParams.get(chip.param) || ''
@@ -532,7 +532,7 @@ export function AuditPage() {
   // ---- Drawer state ----
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null)
 
-  // ---- Deep-link to event via ?event=<id> (Phase 3 — B7) ----
+  // ---- Deep-link to event via ?event=<id> (Phase 3: B7) ----
   const [eventNotOnPage, setEventNotOnPage] = useState(false)
   const deepLinkProcessed = useRef(false)
 
@@ -588,7 +588,7 @@ export function AuditPage() {
   // ---- Render ----
   const actions = (
     <div className="flex items-center gap-2">
-      {/* Export CSV — hidden when 404 (Phase 3 — D10) */}
+      {/* Export CSV: hidden when 404 (Phase 3: D10) */}
       {!is404 && events.length > 0 && (
         <button
           onClick={() => exportAuditCsv(events)}
@@ -601,7 +601,7 @@ export function AuditPage() {
         </button>
       )}
 
-      {/* Column toggles (Phase 3 — C8) */}
+      {/* Column toggles (Phase 3: C8) */}
       <div ref={columnMenuRef} className="relative">
         <button
           onClick={() => setColumnMenuOpen((o) => !o)}
@@ -648,7 +648,7 @@ export function AuditPage() {
 
   return (
     <PageShell title="Audit" description="Track actions and system events." actions={actions}>
-      {/* Quick filter chips (Phase 3 — A1) */}
+      {/* Quick filter chips (Phase 3: A1) */}
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Quick filters">
         {QUICK_FILTERS.map((chip) => {
           const currentValue = searchParams.get(chip.param) || ''
@@ -744,7 +744,7 @@ export function AuditPage() {
         </div>
       </div>
 
-      {/* Deep-link: event not on current page (Phase 3 — B7) */}
+      {/* Deep-link: event not on current page (Phase 3: B7) */}
       {eventNotOnPage && urlEventId && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <Info className="h-4 w-4 shrink-0" />
@@ -765,7 +765,7 @@ export function AuditPage() {
         </div>
       )}
 
-      {/* 404 — endpoint not found */}
+      {/* 404: endpoint not found */}
       {is404 && <AuditNotAvailable />}
 
       {/* Other errors */}

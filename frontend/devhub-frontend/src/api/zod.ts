@@ -201,7 +201,7 @@ export const NetworksListSchema = z.object({
 })
 
 // =============================================================================
-// Audit Schemas (Phase 2 — Industry-standard MVP)
+// Audit Schemas (Phase 2: Industry-standard MVP)
 // =============================================================================
 
 // Actor can be { id, username }, a bare string, or null

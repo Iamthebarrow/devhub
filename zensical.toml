@@ -1,5 +1,5 @@
 # ==============================================================================
-# DevHub — Zensical documentation site configuration
+# DevHub: Zensical documentation site configuration
 # Docs: https://zensical.org/docs/
 # ==============================================================================
 
@@ -13,7 +13,7 @@ repo_name        = "Iamthebarrow/devhub"
 edit_uri         = "edit/main/docs/"
 copyright        = "Copyright &copy; 2026 Ian Barrow. All rights reserved."
 
-# Navigation — nested sections map to collapsible sidebar groups
+# Navigation: nested sections map to collapsible sidebar groups
 nav = [
     { "Home" = "index.md" },
     { "Getting Started" = [

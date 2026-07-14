@@ -21,7 +21,7 @@ Use lowercase with hyphens, e.g. `my-feature-page.png`.
 
 ## Tips for Good Screenshots
 
-- Use a consistent window size — 1280×800 or 1440×900 works well
+- Use a consistent window size, 1280×800 or 1440×900 works well
 - Use the dark or light theme consistently across all screenshots
 - Crop tightly but leave a small border so nothing is cut off
 - Add a few test containers before screenshotting so the app doesn't look empty

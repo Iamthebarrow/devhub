@@ -2,7 +2,7 @@
 
 The DevHub backend exposes a RESTful JSON API at `/api/v1/`. All authenticated endpoints require a `Bearer` token in the `Authorization` header.
 
-An interactive Swagger UI is available at [http://localhost:8888/api/docs/](http://localhost:8888/api/docs/) — you can explore and test endpoints there without writing any code.
+An interactive Swagger UI is available at [http://localhost:8888/api/docs/](http://localhost:8888/api/docs/), so you can explore and test endpoints there without writing any code.
 
 ---
 
@@ -59,7 +59,7 @@ Authorization: Bearer <access-token>
 
 | Endpoint | Method | Auth | Role | Description |
 |---|---|---|---|---|
-| `/health/` | GET | None | Any | Returns `{ "status": "ok" }` — used by Docker healthchecks |
+| `/health/` | GET | None | Any | Returns `{ "status": "ok" }` (used by Docker healthchecks) |
 | `/version/` | GET | None | Any | Returns API version information |
 | `/docker/system/info/` | GET | Bearer | Viewer+ | Docker engine system info (sanitised) |
 | `/docker/system/version/` | GET | Bearer | Viewer+ | Docker engine version |
@@ -81,7 +81,7 @@ Authorization: Bearer <access-token>
 
 | Parameter | Type | Description |
 |---|---|---|
-| (none documented yet) | — | — |
+| (none documented yet) | N/A | N/A |
 
 ### Log Query Parameters
 
@@ -112,7 +112,7 @@ Content-Type: application/json
 ```
 
 !!! note "Async Pull"
-    Image pulls run as a Celery background task. The response acknowledges the task has been queued. Whether pull status is polled by the frontend is to be confirmed — see [Features](features.md#image-management).
+    Image pulls run as a Celery background task. The response acknowledges the task has been queued. Whether pull status is polled by the frontend is to be confirmed; see [Features](features.md#image-management).
 
 ---
 
@@ -157,7 +157,7 @@ DevHub auto-generates an OpenAPI 3 schema using `drf-spectacular`.
 
 | URL | Description |
 |---|---|
-| `/api/schema/` | Raw OpenAPI JSON — importable into Postman, Insomnia, etc. |
+| `/api/schema/` | Raw OpenAPI JSON, importable into Postman, Insomnia, etc. |
 | `/api/docs/` | Interactive Swagger UI |
 
 ![Swagger UI showing the DevHub API endpoints](assets/images/swagger-ui.png)
@@ -173,12 +173,12 @@ The API returns standard HTTP status codes:
 | `200` | Success |
 | `201` | Created |
 | `204` | No content |
-| `400` | Bad request — check the request body |
-| `401` | Unauthenticated — missing or expired token |
-| `403` | Forbidden — authenticated but insufficient role |
+| `400` | Bad request: check the request body |
+| `401` | Unauthenticated: missing or expired token |
+| `403` | Forbidden: authenticated but insufficient role |
 | `404` | Resource not found |
-| `429` | Too many requests — rate limit hit |
-| `500` | Server error — check backend logs |
+| `429` | Too many requests: rate limit hit |
+| `500` | Server error: check backend logs |
 
 Error responses include a JSON body:
 

@@ -1,6 +1,6 @@
 # Quick Start
 
-Get DevHub running locally in about 5 minutes. The entire stack runs inside Docker — no Python, Node, or Postgres installation required on your machine.
+Get DevHub running locally in about 5 minutes. The entire stack runs inside Docker: no Python, Node, or Postgres installation required on your machine.
 
 ---
 
@@ -8,7 +8,7 @@ Get DevHub running locally in about 5 minutes. The entire stack runs inside Dock
 
 You need two things:
 
-- **Docker Desktop** (or Docker Engine + Docker Compose) — [Install Docker](https://docs.docker.com/get-docker/)
+- **Docker Desktop** (or Docker Engine + Docker Compose): [Install Docker](https://docs.docker.com/get-docker/)
 - **Git**
 
 That's it.
@@ -36,7 +36,7 @@ At minimum, change these two values before running:
 
 | Variable | What to Set |
 |---|---|
-| `DJANGO_SECRET_KEY` | Any long random string — never share or commit this |
+| `DJANGO_SECRET_KEY` | Any long random string, never share or commit this |
 | `DEV_ADMIN_PASSWORD` | Your chosen admin password for the local admin account |
 
 All other defaults work fine for local development.

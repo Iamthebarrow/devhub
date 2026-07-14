@@ -6,13 +6,13 @@ The root `.env` file (copied from `.env.example`) is what `docker-compose.yml` r
 
 ---
 
-## Quick Reference — Required Variables
+## Quick Reference: Required Variables
 
 You must set these before your first run. Everything else has a working default.
 
 | Variable | Where to Set | Notes |
 |---|---|---|
-| `DJANGO_SECRET_KEY` | Root `.env` | Any long random string — never commit |
+| `DJANGO_SECRET_KEY` | Root `.env` | Any long random string, never commit |
 | `DEV_ADMIN_PASSWORD` | Root `.env` | Password for the bootstrap admin account |
 
 ---
@@ -53,7 +53,7 @@ These must match the URL you use to access the frontend.
 
 | Variable | Default | Description |
 |---|---|---|
-| `JWT_ACCESS_LIFETIME_MINUTES` | `10` | How long the access token lives. Short by design — the refresh token extends the session transparently |
+| `JWT_ACCESS_LIFETIME_MINUTES` | `10` | How long the access token lives. Short by design: the refresh token extends the session transparently |
 | `JWT_REFRESH_LIFETIME_DAYS` | `14` | How long the refresh cookie is valid |
 
 ---
@@ -65,11 +65,11 @@ These are used once on first startup by the `devhub_bootstrap_roles` management 
 | Variable | Default | Description |
 |---|---|---|
 | `DEV_ADMIN_USERNAME` | `admin` | Username of the auto-created admin account |
-| `DEV_ADMIN_PASSWORD` | `changeme` | Password of the auto-created admin account — **change this** |
+| `DEV_ADMIN_PASSWORD` | `changeme` | Password of the auto-created admin account, **change this** |
 | `DEV_ADMIN_EMAIL` | `admin@localhost` | Email for the admin account |
 
 !!! tip
-    After the first startup, changing these variables has no effect — the account already exists in the database. To reset, drop and recreate the database, or change the password through Django admin.
+    After the first startup, changing these variables has no effect; the account already exists in the database. To reset, drop and recreate the database, or change the password through Django admin.
 
 ---
 
@@ -144,7 +144,7 @@ These are safe to leave at their defaults for local development. In production, 
 |---|---|---|
 | `SECURE_HSTS_SECONDS` | `60` | HSTS header duration in seconds. Start low (60) while testing, then raise to `31536000` (1 year) once you're confident |
 | `SECURE_HSTS_INCLUDE_SUBDOMAINS` | `True` | Apply HSTS to all subdomains |
-| `SECURE_HSTS_PRELOAD` | `False` | Enable only once HSTS is fully tested — adding to the preload list is very hard to undo |
+| `SECURE_HSTS_PRELOAD` | `False` | Enable only once HSTS is fully tested; adding to the preload list is very hard to undo |
 
 ---
 

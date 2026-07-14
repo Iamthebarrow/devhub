@@ -8,7 +8,7 @@ A walkthrough of the DevHub interface from login to day-to-day use.
 
 Navigate to [http://localhost:3100](http://localhost:3100). You'll land on the login page.
 
-Enter your username and password. On success, DevHub issues a short-lived access token (10 minutes by default) and stores a refresh token as an HttpOnly cookie. You will stay logged in automatically — the app silently refreshes your session in the background.
+Enter your username and password. On success, DevHub issues a short-lived access token (10 minutes by default) and stores a refresh token as an HttpOnly cookie. You will stay logged in automatically; the app silently refreshes your session in the background.
 
 ![DevHub login page with username and password fields](assets/images/login-page.png)
 
@@ -47,7 +47,7 @@ It shows:
 
 ## Containers
 
-The Containers page lists all containers — running and stopped.
+The Containers page lists all containers, running and stopped.
 
 ### Browsing Containers
 
@@ -75,8 +75,8 @@ Click any container to open its detail page. Here you'll find:
 The Images page lists all images stored on your Docker host.
 
 From here you can:
-- **Pull** a new image by name (e.g. `nginx:latest`) — this runs asynchronously as a background task
-- **Remove** an image — requires **Admin** role
+- **Pull** a new image by name (e.g. `nginx:latest`); this runs asynchronously as a background task
+- **Remove** an image (requires **Admin** role)
 
 ![Images page listing local Docker images with size, tag, and action buttons](assets/images/images-page.png)
 
@@ -103,11 +103,11 @@ The Networks page is a read-only list of all Docker networks. It shows network n
 
 ## Audit Log
 
-Every meaningful action performed through DevHub — login, logout, container start/stop/restart, image pull/remove — is recorded in the audit log.
+Every meaningful action performed through DevHub (login, logout, container start/stop/restart, image pull/remove) is recorded in the audit log.
 
 The Audit page lets you browse these events. You can filter by actor, action type, resource, and date range.
 
-Records are **immutable** — they cannot be edited or deleted, even by an admin. This makes the audit log a reliable paper trail.
+Records are **immutable**: they cannot be edited or deleted, even by an admin. This makes the audit log a reliable paper trail.
 
 ![Audit log listing recent events with actor, action, resource, and timestamp columns](assets/images/audit-log.png)
 
@@ -117,4 +117,4 @@ Records are **immutable** — they cannot be edited or deleted, even by an admin
 
 ## Logging Out
 
-Click the user menu in the top bar and select **Log Out**. This invalidates your refresh token on the server. Simply closing the browser tab does not invalidate the session — always log out explicitly on shared machines.
+Click the user menu in the top bar and select **Log Out**. This invalidates your refresh token on the server. Simply closing the browser tab does not invalidate the session; always log out explicitly on shared machines.

@@ -1,4 +1,4 @@
-# DevHub Frontend Specs (React + Vite) — Guideline for Another LLM
+# DevHub Frontend Specs (React + Vite): Guideline for Another LLM
 
 This document is a **development contract**. Implement exactly what’s specified, keep changes minimal, and document assumptions in `docs/decisions.md`.
 

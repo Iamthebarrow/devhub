@@ -410,7 +410,7 @@ describe('AuditPage', () => {
   // Phase 3 Tests
   // ===========================================================================
 
-  describe('Phase 3 — quick filter chips', () => {
+  describe('Phase 3: quick filter chips', () => {
     beforeEach(() => {
       useAuthStore.setState({
         status: 'authenticated',
@@ -479,7 +479,7 @@ describe('AuditPage', () => {
     })
   })
 
-  describe('Phase 3 — URL query string sync', () => {
+  describe('Phase 3: URL query string sync', () => {
     beforeEach(() => {
       useAuthStore.setState({
         status: 'authenticated',
@@ -524,7 +524,7 @@ describe('AuditPage', () => {
     })
   })
 
-  describe('Phase 3 — export CSV', () => {
+  describe('Phase 3: export CSV', () => {
     beforeEach(() => {
       useAuthStore.setState({
         status: 'authenticated',
@@ -556,7 +556,7 @@ describe('AuditPage', () => {
 
       expect(mockCreateObjectURL).toHaveBeenCalledTimes(1)
       const blob = mockCreateObjectURL.mock.calls[0][0] as Blob
-      // jsdom's Blob doesn't support .text() — use FileReader instead
+      // jsdom's Blob doesn't support .text(); use FileReader instead
       const text = await new Promise<string>((resolve) => {
         const reader = new FileReader()
         reader.onload = () => resolve(reader.result as string)
@@ -595,7 +595,7 @@ describe('AuditPage', () => {
     })
   })
 
-  describe('Phase 3 — deep-link to event', () => {
+  describe('Phase 3: deep-link to event', () => {
     beforeEach(() => {
       useAuthStore.setState({
         status: 'authenticated',
@@ -637,7 +637,7 @@ describe('AuditPage', () => {
     })
   })
 
-  describe('Phase 3 — column toggles', () => {
+  describe('Phase 3: column toggles', () => {
     beforeEach(() => {
       useAuthStore.setState({
         status: 'authenticated',
@@ -674,7 +674,7 @@ describe('AuditPage', () => {
     })
   })
 
-  describe('Phase 3 — error-first highlighting', () => {
+  describe('Phase 3: error-first highlighting', () => {
     beforeEach(() => {
       useAuthStore.setState({
         status: 'authenticated',
@@ -698,7 +698,7 @@ describe('AuditPage', () => {
     })
   })
 
-  describe('Phase 3 — resource ID copy', () => {
+  describe('Phase 3: resource ID copy', () => {
     beforeEach(() => {
       useAuthStore.setState({
         status: 'authenticated',

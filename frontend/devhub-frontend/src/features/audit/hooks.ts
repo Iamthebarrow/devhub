@@ -1,5 +1,5 @@
 /**
- * Audit query hooks using TanStack Query (Phase 2 — Industry-standard MVP).
+ * Audit query hooks using TanStack Query (Phase 2: Industry-standard MVP).
  */
 
 import { useQuery, keepPreviousData } from '@tanstack/react-query'

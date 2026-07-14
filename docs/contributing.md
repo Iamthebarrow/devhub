@@ -72,7 +72,7 @@ python manage.py devhub_bootstrap_roles
 python manage.py runserver 0.0.0.0:8888
 ```
 
-You'll also need postgres and redis running — either via Docker Compose (run `docker compose up postgres redis docker-socket-proxy` separately) or locally.
+You'll also need postgres and redis running, either via Docker Compose (run `docker compose up postgres redis docker-socket-proxy` separately) or locally.
 
 ### Running Tests
 
